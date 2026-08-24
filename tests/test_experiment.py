@@ -3,6 +3,7 @@ from dataclasses import replace
 
 import numpy as np
 
+from airfaans.distributed import partition_equal
 from airfaans.experiment import (
     ExperimentConfig,
     config_from_yaml,
@@ -72,3 +73,12 @@ training:
     )
     config = config_from_yaml(path, "mesh_graph_net", "interpolation", 29)
     assert (config.hidden_dim, config.processor_layers, config.seed) == (64, 3, 29)
+
+
+def test_distributed_partition_has_equal_disjoint_work():
+    indices = np.arange(7)
+    rank_zero = partition_equal(indices, rank=0, world_size=2)
+    rank_one = partition_equal(indices, rank=1, world_size=2)
+    np.testing.assert_array_equal(rank_zero, [0, 2, 4])
+    np.testing.assert_array_equal(rank_one, [1, 3, 5])
+    assert not set(rank_zero) & set(rank_one)
