@@ -14,6 +14,7 @@ from time import perf_counter
 import numpy as np
 
 from airfaans.airfrans import load_case, load_graph
+from airfaans.distributed import context_from_environment, partition_equal
 from airfaans.evaluation import field_metrics
 from airfaans.models import mesh_graph_net, parameter_count, point_neural_operator, pointwise_mlp
 from airfaans.normalization import Normalization, RunningMoments
@@ -267,14 +268,23 @@ def run_experiment(
     max_validation_cases: int | None = None,
     max_test_cases: int | None = None,
     resume: bool = False,
+    strategy: str = "single",
 ) -> dict[str, object]:
     import torch
+    import torch.distributed as dist
 
     config.validate()
+    distributed = context_from_environment(strategy)
+    if distributed.enabled:
+        if torch.cuda.is_available():
+            torch.cuda.set_device(distributed.local_rank)
+        dist.init_process_group(backend="nccl" if torch.cuda.is_available() else "gloo")
     random.seed(config.seed)
     np.random.seed(config.seed)
     torch.manual_seed(config.seed)
-    if torch.cuda.is_available():
+    if distributed.enabled and torch.cuda.is_available():
+        device = torch.device("cuda", distributed.local_rank)
+    elif torch.cuda.is_available():
         device = torch.device("cuda")
     elif getattr(torch.backends, "mps", None) and torch.backends.mps.is_available():
         device = torch.device("mps")
@@ -290,9 +300,9 @@ def run_experiment(
     if max_test_cases:
         test_ids = test_ids[:max_test_cases]
     normalization = fit_normalization(dataset_root, train_ids, config.nodes_per_case, config.seed)
-    model = build_model(config, len(normalization.feature_mean)).to(device)
+    base_model = build_model(config, len(normalization.feature_mean)).to(device)
     optimizer = torch.optim.AdamW(
-        model.parameters(), lr=config.learning_rate, weight_decay=config.weight_decay
+        base_model.parameters(), lr=config.learning_rate, weight_decay=config.weight_decay
     )
     scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
         optimizer, factor=0.5, patience=max(2, config.patience // 4)
@@ -309,16 +319,27 @@ def run_experiment(
         if not checkpoint_path.exists():
             raise FileNotFoundError(f"resume checkpoint not found: {checkpoint_path}")
         resumed = torch.load(checkpoint_path, map_location=device, weights_only=True)
-        model.load_state_dict(resumed["model"])
+        base_model.load_state_dict(resumed["model"])
         optimizer.load_state_dict(resumed["optimizer"])
         start_epoch = int(resumed["epoch"]) + 1
         best_loss = float(resumed["validation_mean_relative_l2"])
+    if distributed.enabled:
+        ddp_devices = [distributed.local_rank] if device.type == "cuda" else None
+        model = torch.nn.parallel.DistributedDataParallel(
+            base_model,
+            device_ids=ddp_devices,
+            output_device=distributed.local_rank if device.type == "cuda" else None,
+        )
+    else:
+        model = base_model
     started = perf_counter()
     processed_training_nodes = 0
     for epoch in range(start_epoch, config.epochs):
         model.train()
         order = np.random.default_rng(config.seed + epoch).permutation(len(train_ids))
         selected = order[: min(config.cases_per_epoch, len(order))]
+        if distributed.enabled:
+            selected = partition_equal(selected, distributed.rank, distributed.world_size)
         train_losses = []
         for position in selected:
             case = load_case(case_directory(dataset_root, train_ids[position]))
@@ -340,23 +361,37 @@ def run_experiment(
             scaler.update()
             train_losses.append(float(loss.detach().cpu()))
             processed_training_nodes += len(indices)
-        validation = evaluate_cases(
-            model,
-            config.model,
-            dataset_root,
-            validation_ids,
-            normalization,
-            config.nodes_per_case,
-            config.seed + epoch,
-            device,
+        local_training_sum = torch.tensor(
+            [sum(train_losses), len(train_losses)], dtype=torch.float64, device=device
         )
-        validation_loss = float(np.mean(list(validation["mean"]["relative_l2"].values())))
+        if distributed.enabled:
+            dist.all_reduce(local_training_sum, op=dist.ReduceOp.SUM)
+            dist.barrier()
+        mean_training_loss = float((local_training_sum[0] / local_training_sum[1]).detach().cpu())
+        validation_loss_payload = [None]
+        if distributed.primary:
+            validation = evaluate_cases(
+                base_model,
+                config.model,
+                dataset_root,
+                validation_ids,
+                normalization,
+                config.nodes_per_case,
+                config.seed + epoch,
+                device,
+            )
+            validation_loss_payload[0] = float(
+                np.mean(list(validation["mean"]["relative_l2"].values()))
+            )
+        if distributed.enabled:
+            dist.broadcast_object_list(validation_loss_payload, src=0)
+        validation_loss = float(validation_loss_payload[0])
         scheduler.step(validation_loss)
         improved = validation_loss < best_loss - config.minimum_delta
         history.append(
             {
                 "epoch": epoch + 1,
-                "training_mse": float(np.mean(train_losses)),
+                "training_mse": mean_training_loss,
                 "validation_mean_relative_l2": validation_loss,
                 "learning_rate": optimizer.param_groups[0]["lr"],
                 "improved": improved,
@@ -364,25 +399,44 @@ def run_experiment(
         )
         if improved:
             best_loss, stale_epochs = validation_loss, 0
-            torch.save(
-                {
-                    "model": model.state_dict(),
-                    "optimizer": optimizer.state_dict(),
-                    "epoch": epoch,
-                    "config": asdict(config),
-                    "normalization": normalization.to_dict(),
-                    "validation_mean_relative_l2": best_loss,
-                },
-                checkpoint_path,
-            )
+            if distributed.primary:
+                torch.save(
+                    {
+                        "model": base_model.state_dict(),
+                        "optimizer": optimizer.state_dict(),
+                        "epoch": epoch,
+                        "config": asdict(config),
+                        "normalization": normalization.to_dict(),
+                        "validation_mean_relative_l2": best_loss,
+                    },
+                    checkpoint_path,
+                )
         else:
             stale_epochs += 1
+        if distributed.enabled:
+            dist.barrier()
         if stale_epochs >= config.patience:
             break
+    if distributed.enabled:
+        dist.barrier()
     checkpoint = torch.load(checkpoint_path, map_location=device, weights_only=True)
-    model.load_state_dict(checkpoint["model"])
+    base_model.load_state_dict(checkpoint["model"])
+    processed_nodes_tensor = torch.tensor(
+        processed_training_nodes, dtype=torch.int64, device=device
+    )
+    if distributed.enabled:
+        dist.all_reduce(processed_nodes_tensor, op=dist.ReduceOp.SUM)
+    processed_training_nodes = int(processed_nodes_tensor.cpu())
+    if not distributed.primary:
+        dist.barrier()
+        dist.destroy_process_group()
+        return {
+            "evidence_label": "distributed_worker_complete",
+            "rank": distributed.rank,
+            "world_size": distributed.world_size,
+        }
     test = evaluate_cases(
-        model,
+        base_model,
         config.model,
         dataset_root,
         test_ids,
@@ -406,7 +460,11 @@ def run_experiment(
             "torch": torch.__version__,
             "cuda": torch.version.cuda,
         },
-        "parameters": parameter_count(model),
+        "parameters": parameter_count(base_model),
+        "distributed": {
+            "strategy": strategy,
+            "world_size": distributed.world_size,
+        },
         "splits": {"train": train_ids, "validation": validation_ids, "test": test_ids},
         "normalization": normalization.to_dict(),
         "history": history,
@@ -422,4 +480,7 @@ def run_experiment(
         "resumed_from_epoch": start_epoch if resume else None,
     }
     (output_dir / "result.json").write_text(json.dumps(result, indent=2) + "\n", encoding="utf-8")
+    if distributed.enabled:
+        dist.barrier()
+        dist.destroy_process_group()
     return result

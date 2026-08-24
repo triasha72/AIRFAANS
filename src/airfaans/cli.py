@@ -61,6 +61,7 @@ def main() -> None:
     train_parser.add_argument("--epochs", type=int, help="Explicit bounded-run override.")
     train_parser.add_argument("--nodes-per-case", type=int, help="Explicit bounded-run override.")
     train_parser.add_argument("--resume", action="store_true")
+    train_parser.add_argument("--strategy", choices=("single", "ddp"), default="single")
     args = parser.parse_args()
     if args.command == "demo":
         print(json.dumps(demo(args.output), indent=2))
@@ -84,6 +85,7 @@ def main() -> None:
             args.max_validation_cases,
             args.max_test_cases,
             args.resume,
+            args.strategy,
         )
         print(
             json.dumps(
