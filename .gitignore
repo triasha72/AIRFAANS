@@ -1,0 +1,13 @@
+.venv/
+__pycache__/
+.pytest_cache/
+.ruff_cache/
+*.egg-info/
+checkpoints/
+mlruns/
+data/raw/
+data/processed/
+artifacts/local/
+!data/raw/.gitkeep
+!data/processed/.gitkeep
+!artifacts/local/.gitkeep

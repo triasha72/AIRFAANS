@@ -1,0 +1,37 @@
+experiment_id: airfrans_field_surrogate_v0_1
+dataset:
+  name: AirfRANS
+  version: pending_download
+  tasks:
+    - interpolation
+    - scarce
+    - reynolds_ood
+    - aoa_ood
+  split_unit: simulation_case
+  targets: [velocity_x, velocity_y, pressure, turbulent_viscosity]
+graph:
+  primary_edges: mesh_connectivity
+  controlled_baseline: knn
+  neighbors: 8
+models:
+  pointwise_mlp:
+    hidden_dim: 128
+  mesh_graph_net:
+    hidden_dim: 128
+    processor_layers: 6
+  point_neural_operator:
+    hidden_dim: 128
+    modes: 32
+training:
+  seeds: [17, 29, 41]
+  epochs: 200
+  learning_rate: 0.001
+  mixed_precision: true
+  checkpoint_resume_test: true
+uncertainty:
+  method: deep_ensemble
+  members: 3
+active_learning:
+  initial_case_fraction: 0.1
+  acquisition_batch_fraction: 0.05
+  comparison: random_vs_mean_field_uncertainty
