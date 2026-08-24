@@ -1,0 +1,37 @@
+{
+  "evidence_label": "measured_real_airfrans_ingestion",
+  "case_id": "airFoil2D_SST_36.622_11.319_3.941_5.424_1.0_16.283",
+  "source_files": {
+    "internal.vtu": "fdb3c342680e3a0abcb78978ccbdbf9d81d549b37c89eda22fc8fd2b10282465",
+    "aerofoil.vtp": "4496a770767b5bac8ff49aa9d9c3dc829efd8eb546e1fc3a8601298e384c0c53",
+    "freestream.vtp": "1605465fafe7973278a01138008382a87e4a18f3d2b11869cd07446bf6604d9a"
+  },
+  "node_count": 181794,
+  "surface_node_count": 1025,
+  "directed_edge_count": 724640,
+  "node_feature_count": 9,
+  "edge_feature_count": 3,
+  "target_field_count": 4,
+  "reynolds": 2362991.9724188494,
+  "angle_of_attack_deg": 11.319,
+  "target_ranges": {
+    "velocity_x": [
+      -16.803424835205078,
+      65.92267608642578
+    ],
+    "velocity_y": [
+      -6.22259521484375,
+      64.45790100097656
+    ],
+    "pressure": [
+      -1943.7249755859375,
+      671.1069946289062
+    ],
+    "turbulent_viscosity": [
+      0.0,
+      0.026774950325489044
+    ]
+  },
+  "ingestion_elapsed_seconds": 1.5743783749931026,
+  "timing_scope": "local Apple Silicon VTK read, validation, normal mapping, graph build"
+}

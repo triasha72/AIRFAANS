@@ -1,9 +1,18 @@
 # AirfRANS field-surrogate comparison v0.1
 
-Status: preregistered; real-data and GPU execution pending.
+Status: real-data ingestion verified; GPU model training and evaluation pending.
 
-No AirfRANS performance result is claimed in this report yet. The analytic CI
-fixture validates interfaces and deterministic calculations only.
+No AirfRANS model-performance result is claimed in this report yet. The official
+1,000-case task manifest has been frozen, and one real simulation has traversed
+VTK loading, field validation, surface-normal alignment, and mesh-graph
+construction. The resulting 181,794-node, 724,640-edge artifact is tied to the
+three source-file hashes in `artifacts/evaluation/airfrans_ingestion_v0_1.json`.
+
+All three architectures also passed a bounded real-data optimization check on
+the same simulation. The 512-node, 100-step CPU run reduced normalized training
+MSE by 64.4% (MLP), 87.7% (MeshGraphNet), and 67.5% (point operator). These are
+training-loss sanity checks, not held-out metrics or evidence that one model is
+better than another.
 
 ## Questions
 

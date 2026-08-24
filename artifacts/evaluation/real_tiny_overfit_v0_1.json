@@ -1,0 +1,36 @@
+{
+  "evidence_label": "real_airfrans_bounded_optimization_check_not_benchmark",
+  "case_id": "airFoil2D_SST_36.622_11.319_3.941_5.424_1.0_16.283",
+  "sampled_nodes": 512,
+  "surface_nodes": 64,
+  "epochs": 100,
+  "seed": 17,
+  "device": "cpu",
+  "treatments": {
+    "pointwise_mlp": {
+      "parameters": 5060,
+      "initial_normalized_mse": 1.0058361291885376,
+      "final_normalized_mse": 0.35804450511932373,
+      "loss_reduction_fraction": 0.6440329644867921,
+      "elapsed_seconds": 0.07040604201029055,
+      "passed": true
+    },
+    "mesh_graph_net": {
+      "parameters": 84292,
+      "initial_normalized_mse": 1.015244960784912,
+      "final_normalized_mse": 0.12442435324192047,
+      "loss_reduction_fraction": 0.8774440080493235,
+      "elapsed_seconds": 0.5309497499838471,
+      "passed": true
+    },
+    "point_neural_operator": {
+      "parameters": 14356,
+      "initial_normalized_mse": 1.003511667251587,
+      "final_normalized_mse": 0.3260685205459595,
+      "loss_reduction_fraction": 0.6750725166564386,
+      "elapsed_seconds": 0.05669170801411383,
+      "passed": true
+    }
+  },
+  "all_passed": true
+}

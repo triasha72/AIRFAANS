@@ -2,6 +2,10 @@
 
 Geometry-aware scientific machine learning for aerodynamic CFD fields.
 
+**Coursework project for AE 6394 at the Georgia Institute of Technology.**
+The repository documents the implementation and evidence produced for the
+project; it does not imply endorsement by Georgia Tech or the AirfRANS authors.
+
 AIRFAANS takes an airfoil mesh, freestream condition, Reynolds number, and angle
 of attack and predicts four values at every mesh node:
 
@@ -28,13 +32,28 @@ authors. AirfRANS data and model weights are not redistributed here.
 | Pointwise MLP | Implemented | `src/airfaans/models.py` |
 | MeshGraphNet-style message passing | Implemented | `src/airfaans/models.py` |
 | Irregular-point neural operator | Implemented | `src/airfaans/models.py` |
-| VTK/PyVista ingestion | Implemented; real-data run pending | `src/airfaans/io.py` |
+| Official VTK/PyVista ingestion | Measured on a real 181,794-node case | `artifacts/evaluation/airfrans_ingestion_v0_1.json` |
+| Official task manifest | Frozen and validated for all 1,000 cases | `data/manifests/airfrans_tasks_v0_1.json` |
+| Real-data optimization smoke | All three models reduced loss by 64–88% | `artifacts/evaluation/real_tiny_overfit_v0_1.json` |
 | AirfRANS interpolation/OOD measurements | Pending dataset/GPU execution | `reports/airfrans_v0_1.md` |
 | Ensemble UQ and active learning | Metrics/selection implemented; experiment pending | tests and config |
 | FastAPI and Docker | Implemented; checkpoint required for inference | `/health`, `/v1/predict` |
 
 The checked-in demo uses a deterministic analytic cylinder-like fixture. It
 tests the pipeline in CI, but it is neither RANS CFD nor an AirfRANS result.
+
+The real-data ingestion path has also been executed locally. One official
+AirfRANS training simulation produced 181,794 nodes, 1,025 surface nodes, and a
+724,640-edge mesh graph in 1.57 seconds on Apple Silicon. This is measured data
+engineering evidence, not model-accuracy evidence.
+
+A bounded 512-node CPU optimization check also passed for all three model
+families. Over 100 steps, normalized training MSE fell by 64.4% for the MLP,
+87.7% for MeshGraphNet, and 67.5% for the point operator. This confirms that the
+real-data tensors, graph, gradients, and optimizers connect correctly; it is not
+a held-out comparison and should not be presented as model quality.
+
+![Real AirfRANS pressure, velocity and turbulent-viscosity reference fields](docs/assets/airfrans_reference_case_v0_1.png)
 
 ## Why AirfRANS
 
@@ -114,10 +133,12 @@ import airfrans as af
 af.dataset.download(root="data/raw/airfrans", unzip=True)
 ```
 
-Do not commit the dataset. Record the package version, download timestamp, file
-manifest, and SHA-256 identities before preprocessing. Dataset-specific VTK
-array names must be normalized to the explicit contract in `load_vtk_case`;
-the loader fails on missing arrays rather than silently guessing.
+Do not commit the dataset. The downloaded processed archive was verified as
+10,029,067,577 bytes with SHA-256
+`6b301d75dee77fc6c7de6e551c44332be4acc84e30b253e9c60cfa756f6c96db`.
+The checked-in manifest preserves this identity and the official task splits.
+The AirfRANS adapter maps the actual `U`, `p`, `nut`, `implicit_distance`, and
+`Normals` arrays and fails on missing fields rather than silently guessing.
 
 ## Experiments
 
@@ -178,8 +199,8 @@ tests/         deterministic unit and integration tests
   result should add the AirfRANS/OpenFOAM surface convention and viscous shear.
 - Inference speedup versus CFD remains pending because solver wall time and model
   inference must be measured on named hardware.
-- This repository should be described as independent work unless it is genuinely
-  attached to a course, supervisor, or research project.
+- This work is identified as an AE 6394 coursework project. Georgia Tech and the
+  AirfRANS authors do not maintain or endorse this repository.
 
 ## License
 
