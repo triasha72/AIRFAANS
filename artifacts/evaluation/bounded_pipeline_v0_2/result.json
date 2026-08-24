@@ -1,0 +1,157 @@
+{
+  "evidence_label": "airfrans_bounded_run",
+  "config": {
+    "model": "pointwise_mlp",
+    "task": "interpolation",
+    "seed": 17,
+    "epochs": 3,
+    "learning_rate": 0.001,
+    "weight_decay": 1e-05,
+    "hidden_dim": 128,
+    "processor_layers": 6,
+    "modes": 32,
+    "nodes_per_case": 256,
+    "cases_per_epoch": 32,
+    "validation_cases": 20,
+    "patience": 20,
+    "minimum_delta": 1e-05,
+    "mixed_precision": true
+  },
+  "device": "cpu",
+  "environment": {
+    "python": "3.14.6",
+    "platform": "macOS-26.6.2-arm64-arm-64bit-Mach-O",
+    "torch": "2.13.0",
+    "cuda": null
+  },
+  "parameters": 18308,
+  "splits": {
+    "train": [
+      "airFoil2D_SST_36.622_11.319_3.941_5.424_1.0_16.283",
+      "airFoil2D_SST_58.831_-3.563_2.815_4.916_10.078"
+    ],
+    "validation": [
+      "airFoil2D_SST_52.098_9.929_0.419_2.863_19.435"
+    ],
+    "test": [
+      "airFoil2D_SST_31.812_1.334_0.371_3.287_0.0_19.548"
+    ]
+  },
+  "normalization": {
+    "feature_mean": [
+      0.4863923490047455,
+      -0.0026478790678083897,
+      47.31348419189453,
+      1.765868067741394,
+      0.20769159495830536,
+      0.04668097943067551,
+      0.008333594538271427,
+      6.4763946533203125,
+      0.0676838681101799
+    ],
+    "feature_scale": [
+      0.7116208672523499,
+      0.2921082377433777,
+      11.403799057006836,
+      5.421979904174805,
+      0.46555519104003906,
+      0.21717357635498047,
+      0.27493104338645935,
+      0.10293221473693848,
+      0.1298699527978897
+    ],
+    "target_mean": [
+      27.41040802001953,
+      1.4205642938613892,
+      -149.4700469970703,
+      0.0008379854843951762
+    ],
+    "target_scale": [
+      23.143770217895508,
+      19.129785537719727,
+      711.7835083007812,
+      0.0026943811681121588
+    ]
+  },
+  "history": [
+    {
+      "epoch": 1,
+      "training_mse": 0.9926003813743591,
+      "validation_mean_relative_l2": 0.8740551734506136,
+      "learning_rate": 0.001,
+      "improved": true
+    },
+    {
+      "epoch": 2,
+      "training_mse": 0.9863409399986267,
+      "validation_mean_relative_l2": 0.861559099478602,
+      "learning_rate": 0.001,
+      "improved": true
+    },
+    {
+      "epoch": 3,
+      "training_mse": 0.93770432472229,
+      "validation_mean_relative_l2": 0.848396599508987,
+      "learning_rate": 0.001,
+      "improved": true
+    }
+  ],
+  "best_validation_mean_relative_l2": 0.848396599508987,
+  "test": {
+    "case_count": 1,
+    "elapsed_seconds": 0.12387262500124052,
+    "mean": {
+      "rmse": {
+        "velocity_x": 14.056476254517326,
+        "velocity_y": 7.808880897986375,
+        "pressure": 376.38060743393015,
+        "turbulent_viscosity": 0.0011646064031848675
+      },
+      "mae": {
+        "velocity_x": 11.543293901357174,
+        "velocity_y": 6.395144115376752,
+        "pressure": 305.6099905286683,
+        "turbulent_viscosity": 0.0009220340340209617
+      },
+      "relative_l2": {
+        "velocity_x": 0.6413087703104188,
+        "velocity_y": 1.3318470644807094,
+        "pressure": 1.547576323353118,
+        "turbulent_viscosity": 1.0221453262007287
+      }
+    },
+    "per_case": [
+      {
+        "case_id": "airFoil2D_SST_31.812_1.334_0.371_3.287_0.0_19.548",
+        "node_count": 256,
+        "rmse": {
+          "velocity_x": 14.056476254517326,
+          "velocity_y": 7.808880897986375,
+          "pressure": 376.38060743393015,
+          "turbulent_viscosity": 0.0011646064031848675
+        },
+        "mae": {
+          "velocity_x": 11.543293901357174,
+          "velocity_y": 6.395144115376752,
+          "pressure": 305.6099905286683,
+          "turbulent_viscosity": 0.0009220340340209617
+        },
+        "relative_l2": {
+          "velocity_x": 0.6413087703104188,
+          "velocity_y": 1.3318470644807094,
+          "pressure": 1.547576323353118,
+          "turbulent_viscosity": 1.0221453262007287
+        }
+      }
+    ]
+  },
+  "checkpoint": {
+    "path": "artifacts/evaluation/bounded_pipeline_v0_2/best.pt",
+    "sha256": "3896c6d86e28670bab62d36b24d23ccff71163480b8b530ea06a4303137449de"
+  },
+  "elapsed_seconds": 1.2344474170240574,
+  "training_nodes_processed": 1536,
+  "training_nodes_per_second": 1244.281432175467,
+  "peak_accelerator_memory_bytes": null,
+  "resumed_from_epoch": null
+}

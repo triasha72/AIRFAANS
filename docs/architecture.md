@@ -33,6 +33,22 @@ simulation case. Normalization statistics are fit on training simulations only.
 Protected test cases cannot be used to choose graph construction, features,
 model depth, early stopping, or uncertainty calibration.
 
+## Experiment execution
+
+The YAML-driven runner resolves one model, task, and seed at a time. It fits
+streaming feature and target moments from training cases, samples boundary and
+volume nodes deterministically, evaluates a fixed validation partition, applies
+learning-rate reduction and early stopping, and reloads the best checkpoint
+before testing. Bounded case-count overrides receive a different evidence label
+from official-split runs. Official runs evaluate every test-mesh node; sampled
+metrics cannot silently enter the benchmark table.
+
+Complete-mesh evaluation uses the solver connectivity for MeshGraphNet and
+reproduces the official AirfRANS pressure and molecular-viscous force
+integration. This requires full-node predictions because wall shear is derived
+from the VTK velocity gradient. Consequently, the API and bounded sampled runs
+return no CL/CD instead of estimating it from an incomplete surface.
+
 ## Failure behavior
 
 Missing VTK arrays, invalid graphs, split overlap, absent checkpoints, and

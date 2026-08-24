@@ -35,6 +35,9 @@ authors. AirfRANS data and model weights are not redistributed here.
 | Official VTK/PyVista ingestion | Measured on a real 181,794-node case | `artifacts/evaluation/airfrans_ingestion_v0_1.json` |
 | Official task manifest | Frozen and validated for all 1,000 cases | `data/manifests/airfrans_tasks_v0_1.json` |
 | Real-data optimization smoke | All three models reduced loss by 64–88% | `artifacts/evaluation/real_tiny_overfit_v0_1.json` |
+| Multi-case experiment runner | Train-only normalization, sampling, validation, early stopping and best checkpoints | `src/airfaans/experiment.py` |
+| End-to-end checkpoint run | Real train/validation/test cases traversed the complete CPU pipeline | `artifacts/evaluation/bounded_pipeline_v0_2/result.json` |
+| Pressure + viscous force convention | Exact match to official AirfRANS implementation; five reference cases frozen | `artifacts/evaluation/airfrans_force_verification_v0_1.json` |
 | AirfRANS interpolation/OOD measurements | Pending dataset/GPU execution | `reports/airfrans_v0_1.md` |
 | Ensemble UQ and active learning | Metrics/selection implemented; experiment pending | tests and config |
 | FastAPI and Docker | Implemented; checkpoint required for inference | `/health`, `/v1/predict` |
@@ -52,6 +55,16 @@ families. Over 100 steps, normalized training MSE fell by 64.4% for the MLP,
 87.7% for MeshGraphNet, and 67.5% for the point operator. This confirms that the
 real-data tensors, graph, gradients, and optimizers connect correctly; it is not
 a held-out comparison and should not be presented as model quality.
+
+The complete experiment command has also run across distinct real training,
+validation, and test simulations. A deliberately small CPU treatment used two
+training cases, one validation case, one protected test case, 256 nodes per
+case, and three epochs. It created and reloaded a hashed best checkpoint, then
+produced held-out field metrics and the diagnostic below. Its poor errors are
+expected at this budget and demonstrate the evaluation boundary—not surrogate
+performance.
+
+![Bounded checkpoint CFD, prediction and error fields](docs/assets/bounded_pipeline_prediction_v0_2.png)
 
 ![Real AirfRANS pressure, velocity and turbulent-viscosity reference fields](docs/assets/airfrans_reference_case_v0_1.png)
 
@@ -159,6 +172,22 @@ The complete manual run and publication gates are in
 [`docs/real-data-runbook.md`](docs/real-data-runbook.md). Pending tables are in
 [`reports/airfrans_v0_1.md`](reports/airfrans_v0_1.md).
 
+Run a bounded end-to-end verification locally:
+
+```bash
+airfaans train \
+  --dataset-root data/raw/airfrans/processed/Dataset \
+  --model pointwise_mlp --task interpolation --seed 17 \
+  --output-dir artifacts/local/bounded-run \
+  --max-train-cases 2 --max-validation-cases 1 --max-test-cases 1 \
+  --epochs 3 --nodes-per-case 256
+```
+
+Omit every case-count, epoch, and node-count override for a preregistered full
+run. Normalization is fitted only on training simulations. Validation cases are
+reserved deterministically from the official training list; the official test
+list remains untouched.
+
 ## API
 
 ```bash
@@ -170,6 +199,18 @@ curl http://localhost:8000/health
 `/v1/predict` returns HTTP 503 until a trained, validated checkpoint is wired to
 the predictor boundary. That fail-closed behavior prevents the analytic fixture
 or an unvalidated model from appearing as an engineering result.
+
+Configure checkpoint-backed inference with:
+
+```bash
+export AIRFAANS_CHECKPOINT=artifacts/evaluation/bounded_pipeline_v0_2/best.pt
+export AIRFAANS_DATASET_ROOT=data/raw/airfrans/processed/Dataset
+uvicorn airfaans.api:app
+```
+
+The endpoint predicts an indexed AirfRANS case and refuses Reynolds or angle
+metadata that does not match it. Lift, drag, and uncertainty remain `null` until
+viscous-force verification and an ensemble checkpoint are complete.
 
 ## Scaling path
 
@@ -195,8 +236,9 @@ tests/         deterministic unit and integration tests
 - The analytic fixture exists for CI and API/data-contract development only.
 - The point operator is a compact irregular-domain treatment, not a claim of
   reproducing FNO, GINO, or Transolver.
-- Pressure-only force integration is a first engineering check; a publication
-  result should add the AirfRANS/OpenFOAM surface convention and viscous shear.
+- Complete-mesh evaluation reproduces the official AirfRANS pressure and
+  molecular-viscous force convention. Sampled-node runs deliberately omit
+  coefficients because they cannot recover trustworthy wall gradients.
 - Inference speedup versus CFD remains pending because solver wall time and model
   inference must be measured on named hardware.
 - This work is identified as an AE 6394 coursework project. Georgia Tech and the

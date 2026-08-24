@@ -14,6 +14,40 @@ MSE by 64.4% (MLP), 87.7% (MeshGraphNet), and 67.5% (point operator). These are
 training-loss sanity checks, not held-out metrics or evidence that one model is
 better than another.
 
+## End-to-end bounded run
+
+The production experiment path has now been executed on real, disjoint
+simulations: pointwise MLP, seed 17, CPU, two training cases, one validation
+case, one official full-test case, 256 stratified nodes per case, and three
+epochs. It used train-only streaming normalization, validation-based checkpoint
+selection, and checkpoint reload. The selected checkpoint SHA-256 is
+`3896c6d86e28670bab62d36b24d23ccff71163480b8b530ea06a4303137449de`.
+
+The best validation mean relative L2 was 0.8484. On the single sampled test
+case, relative L2 was 0.6413 for velocity-x, 1.3318 for velocity-y, 1.5476 for
+pressure, and 1.0221 for turbulent viscosity. These poor values are expected
+from the intentionally tiny budget. The artifact label is
+`airfrans_bounded_run`; these numbers must not be copied into the benchmark
+table or presented as successful surrogate performance.
+
+This closes the software-integration gap: VTK loading, disjoint splits,
+normalization, optimization, validation, checkpointing, checkpoint reload,
+inference, and held-out metrics now execute as one command. It does not close
+the full GPU benchmark gap.
+
+## Force-convention verification
+
+The complete-mesh evaluator now mirrors the official AirfRANS implementation:
+it computes the VTK velocity gradient, deviatoric strain, molecular-viscous wall
+stress, surface pressure integration, freestream-axis rotation, and dynamic
+pressure normalization. All six components for a representative case matched
+the official library to floating-point precision. Five reference cases are
+frozen in `artifacts/evaluation/airfrans_force_verification_v0_1.json`.
+
+Force coefficients remain absent from bounded sampled-node runs because those
+samples cannot recover a trustworthy wall gradient. Full official runs evaluate
+every mesh node and report total, pressure, and viscous CL/CD contributions.
+
 ## Questions
 
 1. Does mesh message passing improve field prediction over a pointwise model?
@@ -42,7 +76,7 @@ better than another.
 - AirfRANS data manifest and exact official task splits.
 - Training configurations, logs, three seeds, and checkpoint hashes.
 - Raw per-case predictions and metrics.
-- Verified pressure/normal/viscous-force conventions.
+- Predicted full-mesh CL/CD errors using the verified force convention.
 - OOD uncertainty and active-learning curves.
 - Named hardware, package versions, memory, throughput, and latency.
 - Reproducible plots tied to the raw artifact hashes.

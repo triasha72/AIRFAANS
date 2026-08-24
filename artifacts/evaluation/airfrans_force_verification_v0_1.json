@@ -1,0 +1,47 @@
+{
+  "evidence_label": "official_airfrans_reference_field_force_convention",
+  "case_count": 5,
+  "includes_pressure_and_molecular_viscous_contributions": true,
+  "results": {
+    "airFoil2D_SST_36.622_11.319_3.941_5.424_1.0_16.283": {
+      "drag": 0.022758570433489046,
+      "pressure_drag": 0.015102459924614607,
+      "viscous_drag": 0.007656110508874439,
+      "lift": 1.3881649703175383,
+      "pressure_lift": 1.387685545456349,
+      "viscous_lift": 0.00047942486118933924
+    },
+    "airFoil2D_SST_58.831_-3.563_2.815_4.916_10.078": {
+      "drag": 0.00858516565993943,
+      "pressure_drag": 0.0015372618659804692,
+      "viscous_drag": 0.0070479037939589605,
+      "lift": -0.061631432377760156,
+      "pressure_lift": -0.061830527602079556,
+      "viscous_lift": 0.00019909522431939972
+    },
+    "airFoil2D_SST_43.327_8.905_4.236_6.511_10.744": {
+      "drag": 0.016645809000674812,
+      "pressure_drag": 0.009404120397593512,
+      "viscous_drag": 0.007241688603081301,
+      "lift": 1.4356203713674995,
+      "pressure_lift": 1.4354260033300865,
+      "viscous_lift": 0.00019436803741308288
+    },
+    "airFoil2D_SST_89.151_4.462_0.974_4.094_1.0_19.856": {
+      "drag": 0.010660026167452336,
+      "pressure_drag": 0.0035159017239543913,
+      "viscous_drag": 0.007144124443497945,
+      "lift": 0.5162795765578648,
+      "pressure_lift": 0.5161976664228881,
+      "viscous_lift": 8.19101349766757e-05
+    },
+    "airFoil2D_SST_87.422_2.992_1.895_3.128_1.0_10.656": {
+      "drag": 0.008344893717300812,
+      "pressure_drag": 0.0015832206511833483,
+      "viscous_drag": 0.006761673066117463,
+      "lift": 0.4529027115407464,
+      "pressure_lift": 0.4529305970147773,
+      "viscous_lift": -2.7885474030865814e-05
+    }
+  }
+}

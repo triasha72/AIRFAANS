@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import os
+from pathlib import Path
 from time import perf_counter
 
 from pydantic import BaseModel, Field
@@ -17,9 +19,11 @@ class PredictionSummary(BaseModel):
     case_id: str
     model_id: str
     node_count: int
-    lift_coefficient: float
-    drag_coefficient: float
-    mean_uncertainty: float
+    field_means: dict[str, float]
+    lift_coefficient: float | None
+    drag_coefficient: float | None
+    mean_uncertainty: float | None
+    model_latency_ms: float
     latency_ms: float
     evidence_label: str
 
@@ -40,7 +44,10 @@ def create_app(predictor=None):
         if predictor is None:
             raise HTTPException(status_code=503, detail="No trained checkpoint is configured.")
         started = perf_counter()
-        result = predictor(request)
+        try:
+            result = predictor(request)
+        except (FileNotFoundError, ValueError) as exc:
+            raise HTTPException(status_code=422, detail=str(exc)) from exc
         return PredictionSummary(
             **result,
             case_id=request.case_id,
@@ -50,4 +57,16 @@ def create_app(predictor=None):
     return app
 
 
-app = create_app()
+def predictor_from_environment():
+    checkpoint = os.environ.get("AIRFAANS_CHECKPOINT")
+    dataset_root = os.environ.get("AIRFAANS_DATASET_ROOT")
+    if not checkpoint or not dataset_root:
+        return None
+    from airfaans.inference import CheckpointPredictor
+
+    return CheckpointPredictor(
+        Path(checkpoint), Path(dataset_root), os.environ.get("AIRFAANS_DEVICE", "cpu")
+    )
+
+
+app = create_app(predictor_from_environment())

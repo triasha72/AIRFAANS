@@ -13,6 +13,7 @@ authors = [{name = "Triasha Sarkar"}]
 dependencies = [
   "numpy>=1.26,<3",
   "pydantic>=2.7,<3",
+  "PyYAML>=6,<7",
 ]
 
 [project.optional-dependencies]
@@ -20,7 +21,7 @@ ml = ["torch>=2.4,<3", "torch-geometric>=2.6,<3"]
 airfrans = ["pyvista>=0.44,<1", "scipy>=1.13,<2"]
 tracking = ["mlflow>=2.16,<4", "dask>=2024.8,<2027"]
 api = ["fastapi>=0.115,<1", "uvicorn>=0.30,<1"]
-dev = ["pytest>=8,<10", "ruff>=0.8,<1"]
+dev = ["httpx>=0.27,<1", "pytest>=8,<10", "ruff>=0.8,<1"]
 
 [project.scripts]
 airfaans = "airfaans.cli:main"

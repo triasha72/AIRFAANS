@@ -7,7 +7,7 @@ from airfaans.evaluation import (
     ood_uncertainty_ratio,
     uncertainty_error_correlation,
 )
-from airfaans.physics import integrate_pressure_forces
+from airfaans.physics import _nearest_values, integrate_pressure_forces
 from airfaans.synthetic import make_case
 
 
@@ -32,3 +32,10 @@ def test_pressure_force_integration_returns_finite_coefficients():
     coefficients = integrate_pressure_forces(case, case.targets)
     assert np.isfinite(coefficients.lift)
     assert np.isfinite(coefficients.drag)
+
+
+def test_nearest_surface_mapping_is_order_independent():
+    source = np.array([[1.0, 0.0], [0.0, 0.0], [2.0, 0.0]])
+    values = np.array([[10.0], [20.0], [30.0]])
+    query = np.array([[2.0, 0.0], [1.0, 0.0], [0.0, 0.0]])
+    np.testing.assert_array_equal(_nearest_values(query, source, values).ravel(), [30, 10, 20])

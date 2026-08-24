@@ -58,6 +58,29 @@ Use `configs/experiment_v0_1.yaml`. For each model and seed:
 
 Do not tune against Reynolds/AoA OOD test performance.
 
+First exercise the complete boundary with explicit bounded overrides:
+
+```bash
+airfaans train \
+  --dataset-root data/raw/airfrans/processed/Dataset \
+  --model pointwise_mlp --task interpolation --seed 17 \
+  --output-dir artifacts/local/bounded-run \
+  --max-train-cases 2 --max-validation-cases 1 --max-test-cases 1 \
+  --epochs 3 --nodes-per-case 256
+```
+
+For a full treatment, remove every bounded override:
+
+```bash
+airfaans train \
+  --dataset-root data/raw/airfrans/processed/Dataset \
+  --model mesh_graph_net --task interpolation --seed 17 \
+  --output-dir artifacts/local/interpolation-mesh-17
+```
+
+Repeat for all three models, three seeds, and four tasks. A result receives the
+official-split evidence label only when no case-count override was used.
+
 ## 5. Evaluate physics and uncertainty
 
 Report per-field RMSE, MAE, relative L2, and spatial error maps. Add pressure
@@ -85,6 +108,12 @@ OpenFOAM solver wall time only when hardware and solver settings are documented.
 Wire only the best validated checkpoint to the FastAPI predictor. Test `/health`,
 valid inference, invalid input, missing geometry, and concurrent requests. Build
 the Docker image and repeat the same smoke test in the container.
+
+```bash
+AIRFAANS_CHECKPOINT=artifacts/local/interpolation-mesh-17/best.pt \
+AIRFAANS_DATASET_ROOT=data/raw/airfrans/processed/Dataset \
+uvicorn airfaans.api:app
+```
 
 ## 8. Publication gate
 

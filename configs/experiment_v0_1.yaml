@@ -1,7 +1,7 @@
 experiment_id: airfrans_field_surrogate_v0_1
 dataset:
   name: AirfRANS
-  version: pending_download
+  version: processed_dataset_sha256_6b301d75
   tasks:
     - interpolation
     - scarce
@@ -28,6 +28,10 @@ training:
   learning_rate: 0.001
   mixed_precision: true
   checkpoint_resume_test: true
+  nodes_per_case: 4096
+  cases_per_epoch: 32
+  validation_cases: 20
+  early_stopping_patience: 20
 uncertainty:
   method: deep_ensemble
   members: 3
