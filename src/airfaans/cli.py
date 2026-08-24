@@ -16,6 +16,21 @@ from airfaans.physics import integrate_pressure_forces
 from airfaans.synthetic import make_case
 
 
+def training_summary(result: dict[str, object]) -> dict[str, object] | None:
+    """Return the user-facing rank-zero summary, or nothing for DDP workers."""
+    if result.get("evidence_label") == "distributed_worker_complete":
+        return None
+    return {
+        key: result[key]
+        for key in (
+            "evidence_label",
+            "device",
+            "best_validation_mean_relative_l2",
+            "checkpoint",
+        )
+    }
+
+
 def demo(output: Path) -> dict[str, object]:
     case = make_case()
     graph = knn_graph(case, neighbors=8)
@@ -87,20 +102,9 @@ def main() -> None:
             args.resume,
             args.strategy,
         )
-        print(
-            json.dumps(
-                {
-                    key: result[key]
-                    for key in (
-                        "evidence_label",
-                        "device",
-                        "best_validation_mean_relative_l2",
-                        "checkpoint",
-                    )
-                },
-                indent=2,
-            )
-        )
+        summary = training_summary(result)
+        if summary is not None:
+            print(json.dumps(summary, indent=2))
 
 
 if __name__ == "__main__":
