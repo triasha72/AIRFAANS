@@ -314,15 +314,20 @@ def run_experiment(
     output_dir = Path(output_dir)
     output_dir.mkdir(parents=True, exist_ok=True)
     checkpoint_path = output_dir / "best.pt"
+    latest_checkpoint_path = output_dir / "latest.pt"
+    progress_path = output_dir / "progress.json"
     start_epoch = 0
     if resume:
-        if not checkpoint_path.exists():
-            raise FileNotFoundError(f"resume checkpoint not found: {checkpoint_path}")
-        resumed = torch.load(checkpoint_path, map_location=device, weights_only=True)
+        resume_path = latest_checkpoint_path if latest_checkpoint_path.exists() else checkpoint_path
+        if not resume_path.exists():
+            raise FileNotFoundError(f"resume checkpoint not found: {resume_path}")
+        resumed = torch.load(resume_path, map_location=device, weights_only=True)
         base_model.load_state_dict(resumed["model"])
         optimizer.load_state_dict(resumed["optimizer"])
         start_epoch = int(resumed["epoch"]) + 1
         best_loss = float(resumed["validation_mean_relative_l2"])
+        history = list(resumed.get("history", []))
+        stale_epochs = int(resumed.get("stale_epochs", 0))
     if distributed.enabled:
         ddp_devices = [distributed.local_rank] if device.type == "cuda" else None
         model = torch.nn.parallel.DistributedDataParallel(
@@ -399,20 +404,44 @@ def run_experiment(
         )
         if improved:
             best_loss, stale_epochs = validation_loss, 0
-            if distributed.primary:
-                torch.save(
-                    {
-                        "model": base_model.state_dict(),
-                        "optimizer": optimizer.state_dict(),
-                        "epoch": epoch,
-                        "config": asdict(config),
-                        "normalization": normalization.to_dict(),
-                        "validation_mean_relative_l2": best_loss,
-                    },
-                    checkpoint_path,
-                )
         else:
             stale_epochs += 1
+        if distributed.primary:
+            checkpoint_payload = {
+                "model": base_model.state_dict(),
+                "optimizer": optimizer.state_dict(),
+                "epoch": epoch,
+                "config": asdict(config),
+                "normalization": normalization.to_dict(),
+                "validation_mean_relative_l2": best_loss,
+                "history": history,
+                "stale_epochs": stale_epochs,
+            }
+            torch.save(checkpoint_payload, latest_checkpoint_path)
+            if improved:
+                torch.save(checkpoint_payload, checkpoint_path)
+            elapsed_training = perf_counter() - started
+            completed_epochs = epoch - start_epoch + 1
+            mean_epoch_seconds = elapsed_training / completed_epochs
+            progress = {
+                "status": "training",
+                "epoch": epoch + 1,
+                "total_epochs": config.epochs,
+                "percent_complete": 100.0 * (epoch + 1) / config.epochs,
+                "training_mse": mean_training_loss,
+                "validation_mean_relative_l2": validation_loss,
+                "best_validation_mean_relative_l2": best_loss,
+                "elapsed_seconds": elapsed_training,
+                "estimated_remaining_seconds": mean_epoch_seconds * (config.epochs - epoch - 1),
+            }
+            progress_path.write_text(json.dumps(progress, indent=2) + "\n", encoding="utf-8")
+            print(
+                f"epoch={epoch + 1}/{config.epochs} "
+                f"train_mse={mean_training_loss:.6g} "
+                f"validation_relative_l2={validation_loss:.6g} "
+                f"eta_seconds={progress['estimated_remaining_seconds']:.0f}",
+                flush=True,
+            )
         if distributed.enabled:
             dist.barrier()
         if stale_epochs >= config.patience:
@@ -480,6 +509,22 @@ def run_experiment(
         "resumed_from_epoch": start_epoch if resume else None,
     }
     (output_dir / "result.json").write_text(json.dumps(result, indent=2) + "\n", encoding="utf-8")
+    progress_path.write_text(
+        json.dumps(
+            {
+                "status": "complete",
+                "epoch": len(history),
+                "total_epochs": config.epochs,
+                "percent_complete": 100.0,
+                "best_validation_mean_relative_l2": best_loss,
+                "elapsed_seconds": elapsed,
+                "estimated_remaining_seconds": 0.0,
+            },
+            indent=2,
+        )
+        + "\n",
+        encoding="utf-8",
+    )
     if distributed.enabled:
         dist.barrier()
         dist.destroy_process_group()
