@@ -456,9 +456,13 @@ def run_experiment(
     if distributed.enabled:
         dist.all_reduce(processed_nodes_tensor, op=dist.ReduceOp.SUM)
     processed_training_nodes = int(processed_nodes_tensor.cpu())
-    if not distributed.primary:
+    if distributed.enabled:
+        # Evaluation runs only on rank zero and can exceed NCCL's collective
+        # timeout on full meshes. Close the training process group before that
+        # rank-only work instead of making workers wait in a long barrier.
         dist.barrier()
         dist.destroy_process_group()
+    if not distributed.primary:
         return {
             "evidence_label": "distributed_worker_complete",
             "rank": distributed.rank,
@@ -525,7 +529,4 @@ def run_experiment(
         + "\n",
         encoding="utf-8",
     )
-    if distributed.enabled:
-        dist.barrier()
-        dist.destroy_process_group()
     return result
