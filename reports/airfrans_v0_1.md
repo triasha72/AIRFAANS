@@ -45,9 +45,9 @@ and drag MAE; the Pointwise MLP leads both velocity components and lift MAE.
 The compact point operator does not win a reported metric. Seeds 29 and 41 are
 still required before treating this single-seed ordering as stable.
 
-## End-to-end bounded run
+## Complete-pipeline coursework check
 
-The production experiment path has now been executed on real, disjoint
+The complete experimental workflow has now been checked on real, disjoint
 simulations: pointwise MLP, seed 17, CPU, two training cases, one validation
 case, one official full-test case, 256 stratified nodes per case, and three
 epochs. It used train-only streaming normalization, validation-based checkpoint
@@ -61,10 +61,11 @@ from the intentionally tiny budget. The artifact label is
 `airfrans_bounded_run`; these numbers must not be copied into the benchmark
 table or presented as successful surrogate performance.
 
-This closes the software-integration gap: VTK loading, disjoint splits,
-normalization, optimization, validation, checkpointing, checkpoint reload,
-inference, and held-out metrics now execute as one command. It does not close
-the full GPU benchmark gap.
+For the coursework study, this closes the workflow-integration gap: VTK
+loading, disjoint splits, normalization, optimization, validation,
+checkpointing, checkpoint reload, inference, and held-out metrics now execute
+as one command. It does not close the full GPU benchmark gap, and it is not
+evidence of production deployment.
 
 ## Force-convention verification
 

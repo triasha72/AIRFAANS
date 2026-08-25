@@ -1,5 +1,9 @@
 # Architecture decisions
 
+This document records design choices for an AE 6394 coursework experiment. The
+architecture supports reproducible scientific comparison; it is not a design
+for a sponsored or production software system.
+
 ## Goal
 
 Predict complete aerodynamic fields on irregular meshes while preserving the
@@ -46,12 +50,15 @@ metrics cannot silently enter the benchmark table.
 Complete-mesh evaluation uses the solver connectivity for MeshGraphNet and
 reproduces the official AirfRANS pressure and molecular-viscous force
 integration. This requires full-node predictions because wall shear is derived
-from the VTK velocity gradient. Consequently, the API and bounded sampled runs
-return no CL/CD instead of estimating it from an incomplete surface.
+from the VTK velocity gradient. Consequently, the optional demonstration API
+and bounded sampled runs return no CL/CD instead of estimating it from an
+incomplete surface.
 
 ## Failure behavior
 
 Missing VTK arrays, invalid graphs, split overlap, absent checkpoints, and
-non-finite fields are errors. The API is unavailable until a validated model is
-configured. Unsupported framework or hardware combinations are reported as
-unsupported, not as zero-valued measurements.
+non-finite fields are errors. The optional API remains unavailable until a
+validated model is configured. Unsupported framework or hardware combinations
+are reported as unsupported, not as zero-valued measurements. These safeguards
+protect the validity of the coursework evidence; they are not claims of
+production operations or service reliability.

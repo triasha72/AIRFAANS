@@ -6,6 +6,12 @@ Geometry-aware scientific machine learning for aerodynamic CFD fields.
 The repository documents the implementation and evidence produced for the
 project; it does not imply endorsement by Georgia Tech or the AirfRANS authors.
 
+This is a scientific machine-learning coursework study, not a sponsored
+engineering engagement or a production application. Its scope is to formulate
+and test a reproducible CFD-surrogate comparison, analyze measured results, and
+document limitations. The included command-line tools and optional API are
+research utilities for repeatability and demonstration, not a deployed service.
+
 AIRFAANS takes an airfoil mesh, freestream condition, Reynolds number, and angle
 of attack and predicts four values at every mesh node:
 
@@ -36,12 +42,12 @@ authors. AirfRANS data and model weights are not redistributed here.
 | Official task manifest | Frozen and validated for all 1,000 cases | `data/manifests/airfrans_tasks_v0_1.json` |
 | Real-data optimization smoke | All three models reduced loss by 64–88% | `artifacts/evaluation/real_tiny_overfit_v0_1.json` |
 | Multi-case experiment runner | Train-only normalization, sampling, validation, early stopping and best checkpoints | `src/airfaans/experiment.py` |
-| End-to-end checkpoint run | Real train/validation/test cases traversed the complete CPU pipeline | `artifacts/evaluation/bounded_pipeline_v0_2/result.json` |
+| Complete-pipeline coursework check | Real train/validation/test cases traversed the complete CPU workflow | `artifacts/evaluation/bounded_pipeline_v0_2/result.json` |
 | Pressure + viscous force convention | Exact match to official AirfRANS implementation; five reference cases frozen | `artifacts/evaluation/airfrans_force_verification_v0_1.json` |
 | MeshGraphNet interpolation measurement | 200/200 official test cases, full meshes, seed 17 | `artifacts/evaluation/mesh_graph_net_interpolation_seed17_50ep_summary.json` |
 | Matched architecture/seeds and OOD measurements | Pending GPU execution | `reports/airfrans_v0_1.md` |
 | Ensemble UQ and active learning | Metrics/selection implemented; experiment pending | tests and config |
-| FastAPI and Docker | Implemented; checkpoint required for inference | `/health`, `/v1/predict` |
+| Optional demonstration interface | FastAPI and Docker exercise the checkpoint boundary; no production deployment is claimed | `/health`, `/v1/predict` |
 
 The checked-in demo uses a deterministic analytic cylinder-like fixture. It
 tests the pipeline in CI, but it is neither RANS CFD nor an AirfRANS result.
@@ -141,7 +147,7 @@ typed FlowCase -> mesh or k-NN graph -> PyTorch Geometric Data
   field metrics | Cp/CL/CD | ensembles | OOD | active learning
                     |
                     v
-           MLflow artifacts + FastAPI
+     experiment artifacts + optional demo API
 ```
 
 ## Five-minute start
@@ -200,7 +206,7 @@ The complete manual run and publication gates are in
 [`docs/real-data-runbook.md`](docs/real-data-runbook.md). Pending tables are in
 [`reports/airfrans_v0_1.md`](reports/airfrans_v0_1.md).
 
-Run a bounded end-to-end verification locally:
+Run a bounded complete-pipeline coursework check locally:
 
 ```bash
 airfaans train \
@@ -216,7 +222,11 @@ run. Normalization is fitted only on training simulations. Validation cases are
 reserved deterministically from the official training list; the official test
 list remains untouched.
 
-## API
+## Optional demonstration API
+
+This interface is included to demonstrate checkpoint loading and input
+validation within the coursework repository. It is not presented as a hosted,
+production-ready, or client-facing application.
 
 ```bash
 python -m pip install -e ".[api]"
@@ -301,6 +311,8 @@ tests/         deterministic unit and integration tests
   coefficients because they cannot recover trustworthy wall gradients.
 - Inference speedup versus CFD remains pending because solver wall time and model
   inference must be measured on named hardware.
+- The project does not include production deployment, service-level objectives,
+  user management, operational monitoring, or a sponsored-client deliverable.
 - This work is identified as an AE 6394 coursework project. Georgia Tech and the
   AirfRANS authors do not maintain or endorse this repository.
 
