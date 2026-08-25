@@ -259,6 +259,150 @@ def evaluate_cases(
     return summary
 
 
+def aggregate_case_results(per_case: list[dict[str, object]], elapsed_seconds: float) -> dict[str, object]:
+    """Aggregate persisted full-mesh case records using the training metric contract."""
+    if not per_case:
+        raise ValueError("at least one evaluated case is required")
+    fields = ("velocity_x", "velocity_y", "pressure", "turbulent_viscosity")
+    aggregate = {
+        metric: {
+            field: float(np.mean([case[metric][field] for case in per_case])) for field in fields
+        }
+        for metric in ("rmse", "mae", "relative_l2")
+    }
+    return {
+        "case_count": len(per_case),
+        "full_mesh": True,
+        "elapsed_seconds": elapsed_seconds,
+        "mean": aggregate,
+        "mean_force_absolute_error": {
+            component: float(
+                np.mean(
+                    [case["force_coefficients"]["absolute_error"][component] for case in per_case]
+                )
+            )
+            for component in ("drag", "lift")
+        },
+        "per_case": per_case,
+    }
+
+
+def evaluate_checkpoint_shard(
+    dataset_root: Path,
+    manifest_path: Path,
+    checkpoint_path: Path,
+    output_dir: Path,
+    start: int = 0,
+    count: int | None = None,
+    resume: bool = True,
+) -> dict[str, object]:
+    """Evaluate an official-test shard, persisting every case before continuing.
+
+    Shards are intentionally independent of distributed training. This makes a
+    multi-hour official evaluation resumable across Kaggle session boundaries.
+    """
+    import torch
+
+    if start < 0 or (count is not None and count <= 0):
+        raise ValueError("start must be non-negative and count must be positive")
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    checkpoint = torch.load(checkpoint_path, map_location=device, weights_only=True)
+    config = ExperimentConfig(**checkpoint["config"])
+    normalization = Normalization.from_dict(checkpoint["normalization"])
+    model = build_model(config, len(normalization.feature_mean)).to(device)
+    model.load_state_dict(checkpoint["model"])
+    _, _, all_test_ids = official_split(manifest_path, config.task, config.validation_cases)
+    stop = len(all_test_ids) if count is None else min(len(all_test_ids), start + count)
+    selected = all_test_ids[start:stop]
+    if not selected:
+        raise ValueError("requested shard contains no official test cases")
+    cases_dir = Path(output_dir) / "evaluation_cases"
+    cases_dir.mkdir(parents=True, exist_ok=True)
+    started = perf_counter()
+    completed: list[str] = []
+    for absolute_position, case_id in enumerate(selected, start=start):
+        path = cases_dir / f"{absolute_position:04d}-{case_id}.json"
+        if resume and path.exists():
+            completed.append(case_id)
+            continue
+        case_started = perf_counter()
+        case_result = evaluate_cases(
+            model,
+            config.model,
+            dataset_root,
+            [case_id],
+            normalization,
+            config.nodes_per_case,
+            config.seed + absolute_position,
+            device,
+            full_mesh=True,
+        )["per_case"][0]
+        record = {
+            "official_test_index": absolute_position,
+            "model": config.model,
+            "task": config.task,
+            "seed": config.seed,
+            "checkpoint_sha256": hashlib.sha256(Path(checkpoint_path).read_bytes()).hexdigest(),
+            "elapsed_seconds": perf_counter() - case_started,
+            "result": case_result,
+        }
+        path.write_text(json.dumps(record, indent=2) + "\n", encoding="utf-8")
+        completed.append(case_id)
+        print(f"evaluated={absolute_position + 1}/{len(all_test_ids)} case={case_id}", flush=True)
+    status = {
+        "evidence_label": "airfrans_official_test_shard",
+        "official_test_case_count": len(all_test_ids),
+        "shard_start": start,
+        "shard_stop": stop,
+        "completed_case_ids": completed,
+        "elapsed_seconds": perf_counter() - started,
+        "cases_directory": str(cases_dir),
+    }
+    (Path(output_dir) / f"evaluation-shard-{start:04d}-{stop:04d}.json").write_text(
+        json.dumps(status, indent=2) + "\n", encoding="utf-8"
+    )
+    return status
+
+
+def aggregate_evaluation_shards(
+    manifest_path: Path, checkpoint_path: Path, output_dir: Path
+) -> dict[str, object]:
+    """Validate complete official-test coverage and write the final evidence file."""
+    import torch
+
+    checkpoint = torch.load(checkpoint_path, map_location="cpu", weights_only=True)
+    config = ExperimentConfig(**checkpoint["config"])
+    train_ids, validation_ids, test_ids = official_split(
+        manifest_path, config.task, config.validation_cases
+    )
+    records = []
+    for path in sorted((Path(output_dir) / "evaluation_cases").glob("*.json")):
+        records.append(json.loads(path.read_text(encoding="utf-8")))
+    by_index = {int(record["official_test_index"]): record for record in records}
+    missing = [index for index in range(len(test_ids)) if index not in by_index]
+    if missing:
+        raise ValueError(f"official test evaluation is incomplete; missing indices: {missing}")
+    expected_hash = hashlib.sha256(Path(checkpoint_path).read_bytes()).hexdigest()
+    if any(record["checkpoint_sha256"] != expected_hash for record in by_index.values()):
+        raise ValueError("evaluation shards were produced from different checkpoints")
+    per_case = [by_index[index]["result"] for index in range(len(test_ids))]
+    test = aggregate_case_results(
+        per_case, sum(float(by_index[index]["elapsed_seconds"]) for index in range(len(test_ids)))
+    )
+    result = {
+        "evidence_label": "airfrans_official_split_result",
+        "config": asdict(config),
+        "splits": {"train": train_ids, "validation": validation_ids, "test": test_ids},
+        "best_validation_mean_relative_l2": checkpoint["validation_mean_relative_l2"],
+        "test": test,
+        "checkpoint": {"path": str(checkpoint_path), "sha256": expected_hash},
+        "evaluation_provenance": "resumable_per_case_full_mesh",
+    }
+    Path(output_dir).mkdir(parents=True, exist_ok=True)
+    (Path(output_dir) / "result.json").write_text(json.dumps(result, indent=2) + "\n", encoding="utf-8")
+    return result
+
+
 def run_experiment(
     dataset_root: Path,
     manifest_path: Path,

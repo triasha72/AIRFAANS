@@ -9,7 +9,14 @@ from pathlib import Path
 import numpy as np
 
 from airfaans.evaluation import field_metrics
-from airfaans.experiment import MODEL_NAMES, TASK_SPLITS, config_from_yaml, run_experiment
+from airfaans.experiment import (
+    MODEL_NAMES,
+    TASK_SPLITS,
+    aggregate_evaluation_shards,
+    config_from_yaml,
+    evaluate_checkpoint_shard,
+    run_experiment,
+)
 from airfaans.graph import knn_graph
 from airfaans.io import save_case
 from airfaans.physics import integrate_pressure_forces
@@ -77,6 +84,26 @@ def main() -> None:
     train_parser.add_argument("--nodes-per-case", type=int, help="Explicit bounded-run override.")
     train_parser.add_argument("--resume", action="store_true")
     train_parser.add_argument("--strategy", choices=("single", "ddp"), default="single")
+    evaluate_parser = subparsers.add_parser(
+        "evaluate", help="Run a resumable full-mesh official-test shard."
+    )
+    evaluate_parser.add_argument("--dataset-root", type=Path, required=True)
+    evaluate_parser.add_argument(
+        "--manifest", type=Path, default=Path("data/manifests/airfrans_tasks_v0_1.json")
+    )
+    evaluate_parser.add_argument("--checkpoint", type=Path, required=True)
+    evaluate_parser.add_argument("--output-dir", type=Path, required=True)
+    evaluate_parser.add_argument("--start", type=int, default=0)
+    evaluate_parser.add_argument("--count", type=int)
+    evaluate_parser.add_argument("--no-resume", action="store_true")
+    aggregate_parser = subparsers.add_parser(
+        "aggregate", help="Validate all official-test shards and write result.json."
+    )
+    aggregate_parser.add_argument(
+        "--manifest", type=Path, default=Path("data/manifests/airfrans_tasks_v0_1.json")
+    )
+    aggregate_parser.add_argument("--checkpoint", type=Path, required=True)
+    aggregate_parser.add_argument("--output-dir", type=Path, required=True)
     args = parser.parse_args()
     if args.command == "demo":
         print(json.dumps(demo(args.output), indent=2))
@@ -105,6 +132,15 @@ def main() -> None:
         summary = training_summary(result)
         if summary is not None:
             print(json.dumps(summary, indent=2))
+    elif args.command == "evaluate":
+        print(json.dumps(evaluate_checkpoint_shard(
+            args.dataset_root, args.manifest, args.checkpoint, args.output_dir,
+            args.start, args.count, not args.no_resume,
+        ), indent=2))
+    elif args.command == "aggregate":
+        print(json.dumps(aggregate_evaluation_shards(
+            args.manifest, args.checkpoint, args.output_dir
+        ), indent=2))
 
 
 if __name__ == "__main__":

@@ -212,6 +212,38 @@ The endpoint predicts an indexed AirfRANS case and refuses Reynolds or angle
 metadata that does not match it. Lift, drag, and uncertainty remain `null` until
 viscous-force verification and an ensemble checkpoint are complete.
 
+## Resumable official full-mesh evaluation
+
+Full-mesh force evaluation is intentionally separated from training. Each case
+is committed to disk as soon as it finishes, tagged with its official test index
+and checkpoint SHA-256. This prevents a Kaggle session limit from invalidating a
+multi-hour evaluation and makes mixed-checkpoint aggregation impossible.
+
+Run consecutive shards (the example uses five cases per Kaggle session):
+
+```bash
+python -m airfaans.cli evaluate \
+  --dataset-root "$AIRFRANS_DATASET_ROOT" \
+  --checkpoint "$AIRFAANS_CHECKPOINT" \
+  --output-dir results/mesh_graph_net-interpolation-seed17-50ep \
+  --start 0 --count 5
+```
+
+Copy the raw `evaluation_cases/` directory to durable storage after every
+session, then continue with `--start 5`, `--start 10`, and so on. Re-running a
+shard is safe: completed case records are skipped unless `--no-resume` is used.
+After every official test index is present, validate coverage and aggregate:
+
+```bash
+python -m airfaans.cli aggregate \
+  --checkpoint "$AIRFAANS_CHECKPOINT" \
+  --output-dir results/mesh_graph_net-interpolation-seed17-50ep
+```
+
+The aggregator refuses to write `result.json` if an index is missing or any case
+was evaluated from a different checkpoint. Raw per-case JSON remains alongside
+the aggregate; compression is optional and is never the sole evidence copy.
+
 ## Scaling path
 
 - Dask parallelizes independent VTK preprocessing tasks.
