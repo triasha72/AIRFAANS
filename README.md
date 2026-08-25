@@ -98,6 +98,14 @@ both velocity components and lift. The compact point operator trails the two
 baselines. These are single-seed findings; seeds 29 and 41 are required before
 claiming a stable ranking.
 
+A second MeshGraphNet treatment (seed 29, the same 50-epoch contract) has also
+completed all 200 official interpolation meshes. Relative L2 was `0.36349` for
+velocity-x, `0.65474` for velocity-y, `0.71475` for pressure, and `0.64414` for
+turbulent viscosity; drag and lift MAE were `0.21254` and `0.19944`. This is a
+useful repeat but not yet the preregistered three-seed estimate. Its raw records
+were checked in the live Kaggle session, and the durable compact summary is in
+`artifacts/evaluation/mesh_graph_net_interpolation_seed29_50ep_summary.json`.
+
 ![Bounded checkpoint CFD, prediction and error fields](docs/assets/bounded_pipeline_prediction_v0_2.png)
 
 ![Real AirfRANS pressure, velocity and turbulent-viscosity reference fields](docs/assets/airfrans_reference_case_v0_1.png)

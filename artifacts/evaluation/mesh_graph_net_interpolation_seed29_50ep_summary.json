@@ -1,0 +1,49 @@
+{
+  "evidence_label": "airfrans_official_split_result_summary",
+  "coursework": "AE 6394",
+  "model": "mesh_graph_net",
+  "task": "interpolation",
+  "seed": 29,
+  "epochs_requested": 50,
+  "official_test_cases": 200,
+  "full_mesh": true,
+  "best_validation_mean_relative_l2": 0.5432999237577966,
+  "test_mean": {
+    "relative_l2": {
+      "velocity_x": 0.36348858078872737,
+      "velocity_y": 0.6547392176773428,
+      "pressure": 0.714749857666743,
+      "turbulent_viscosity": 0.6441421311500004
+    },
+    "rmse": {
+      "velocity_x": 17.817534529977067,
+      "velocity_y": 16.15327680425977,
+      "pressure": 1299.1249754802477,
+      "turbulent_viscosity": 0.0016052787769563197
+    },
+    "mae": {
+      "velocity_x": 12.606025028915651,
+      "velocity_y": 9.959584852753776,
+      "pressure": 755.191143456485,
+      "turbulent_viscosity": 0.0007522523717997787
+    }
+  },
+  "test_mean_force_absolute_error": {
+    "drag": 0.21254460401812822,
+    "lift": 0.19943528109289957
+  },
+  "test_elapsed_seconds": 1324.9387113479988,
+  "checkpoint_sha256": "eba0c367474a784e1bb79731140788e90785f573f6d70974e8d81130ec714a25",
+  "aggregate_result_sha256": "cde209da01c1da79e2397369d97aff9e075fadf3072858e992c37418414047b1",
+  "raw_artifact_inventory": {
+    "per_case_json_files": 200,
+    "checksummed_files_before_manifest": 205,
+    "manifest_sha256": "5422c3c1a3a23637bcc5d69723a3ccfdce16ae990365bf36b09d48e180db2847",
+    "location_at_measurement": "/kaggle/working/results/mesh_graph_net-interpolation-seed29-50ep"
+  },
+  "limitations": [
+    "This is the second measured MeshGraphNet seed; seed 41 is still required for the preregistered three-seed comparison.",
+    "Cross-architecture seed-29 comparison remains incomplete until the point neural operator finishes.",
+    "The compact summary is durable in GitHub, but the raw Kaggle directory remains session-scoped until separately exported."
+  ]
+}

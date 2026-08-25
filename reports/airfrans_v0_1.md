@@ -45,6 +45,15 @@ and drag MAE; the Pointwise MLP leads both velocity components and lift MAE.
 The compact point operator does not win a reported metric. Seeds 29 and 41 are
 still required before treating this single-seed ordering as stable.
 
+The seed-29 MeshGraphNet repeat is also complete. It produced full-mesh mean
+relative L2 values of `0.36349` (velocity-x), `0.65474` (velocity-y), `0.71475`
+(pressure), and `0.64414` (turbulent viscosity), with drag MAE `0.21254` and
+lift MAE `0.19944`. All 200 official indices were aggregated from case records
+tied to checkpoint SHA-256
+`eba0c367474a784e1bb79731140788e90785f573f6d70974e8d81130ec714a25`.
+Seed 41 and the remaining seed-29 architecture treatment are still required;
+therefore no three-seed mean or variance is reported yet.
+
 ## Complete-pipeline coursework check
 
 The complete experimental workflow has now been checked on real, disjoint
