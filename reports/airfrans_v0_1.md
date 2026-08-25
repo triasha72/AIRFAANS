@@ -39,9 +39,11 @@ aggregate `result.json` SHA-256 is
 These numbers show a functioning geometry-aware surrogate and expose where the
 model is still weak: velocity-x is materially easier than cross-flow velocity,
 pressure, and turbulent viscosity, and force errors are not yet small enough
-for design use. This treatment is one seed and one 50-epoch budget. It is not a
-fair ranking against the earlier 200-epoch Pointwise MLP run, so that comparison
-is deferred until matched-budget reruns exist.
+for design use. The matched 50-epoch seed-17 pass is now complete for all three
+architectures. MeshGraphNet leads pressure and turbulent-viscosity relative L2
+and drag MAE; the Pointwise MLP leads both velocity components and lift MAE.
+The compact point operator does not win a reported metric. Seeds 29 and 41 are
+still required before treating this single-seed ordering as stable.
 
 ## End-to-end bounded run
 
@@ -90,9 +92,9 @@ every mesh node and report total, pressure, and viscous CL/CD contributions.
 
 | Task | Model | Pressure rel. L2 | Velocity rel. L2 | nu_t rel. L2 | CL MAE | CD MAE | Mean ± variation |
 |---|---|---:|---:|---:|---:|---:|---|
-| Full/interpolation | Pointwise MLP | Pending | Pending | Pending | Pending | Pending | Pending |
+| Full/interpolation | Pointwise MLP | 0.9355 | ux 0.3904; uy 0.7091 | 0.7888 | 0.2932 | 0.3628 | seed 17 only |
 | Full/interpolation | MeshGraphNet | 0.8261 | ux 0.4013; uy 0.7487 | 0.7886 | 0.5268 | 0.3012 | seed 17 only |
-| Full/interpolation | Point operator | Pending | Pending | Pending | Pending | Pending | Pending |
+| Full/interpolation | Point operator | 1.2434 | ux 0.4283; uy 1.0443 | 0.8018 | 0.2959 | 0.3695 | seed 17 only |
 | Reynolds OOD | Pointwise MLP | Pending | Pending | Pending | Pending | Pending | Pending |
 | Reynolds OOD | MeshGraphNet | Pending | Pending | Pending | Pending | Pending | Pending |
 | Reynolds OOD | Point operator | Pending | Pending | Pending | Pending | Pending | Pending |

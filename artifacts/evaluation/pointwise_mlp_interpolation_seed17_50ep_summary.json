@@ -1,0 +1,19 @@
+{
+  "evidence_label": "airfrans_official_split_result_summary",
+  "model": "pointwise_mlp",
+  "task": "interpolation",
+  "seed": 17,
+  "epochs_requested": 50,
+  "official_test_cases": 200,
+  "full_mesh": true,
+  "best_validation_mean_relative_l2": 0.6984309797032255,
+  "test_mean_relative_l2": {"velocity_x": 0.39036567236390746, "velocity_y": 0.7091281375838381, "pressure": 0.9355295875637304, "turbulent_viscosity": 0.7887770438903743},
+  "test_mean_force_absolute_error": {"drag": 0.3628141834377401, "lift": 0.2932034401166572},
+  "training_elapsed_seconds": 652.4499022180003,
+  "test_elapsed_seconds": 520.8933186530012,
+  "checkpoint_sha256": "3706d08ed6d5842e262d3efae001c3626f323ecec736e79f89ed67268924cd41",
+  "aggregate_result_sha256": "b098b469044d9324c23e0ee15da769d96fd85a7ddcef6d05f036d81b826cebee",
+  "raw_per_case_json_files": 200,
+  "checksummed_files": 205,
+  "limitations": ["Single seed; repeat-seed uncertainty is pending."]
+}

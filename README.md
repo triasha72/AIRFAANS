@@ -77,6 +77,21 @@ persisted separately before aggregation and tied to checkpoint SHA-256
 This is credible single-treatment evidence, not yet a model ranking: matched
 budgets, additional seeds, the point operator, and OOD tasks remain pending.
 
+The matched 50-epoch, seed-17 architecture pass is now complete on all 200
+official interpolation test meshes:
+
+| Model | ux rel. L2 | uy rel. L2 | pressure rel. L2 | nu_t rel. L2 | CD MAE | CL MAE |
+|---|---:|---:|---:|---:|---:|---:|
+| Pointwise MLP | **0.3904** | **0.7091** | 0.9355 | 0.7888 | 0.3628 | **0.2932** |
+| MeshGraphNet | 0.4013 | 0.7487 | **0.8261** | **0.7886** | **0.3012** | 0.5268 |
+| Point neural operator | 0.4283 | 1.0443 | 1.2434 | 0.8018 | 0.3695 | 0.2959 |
+
+At this budget, no architecture dominates every output: MeshGraphNet is best
+on pressure, turbulent viscosity, and drag, while the pointwise MLP is best on
+both velocity components and lift. The compact point operator trails the two
+baselines. These are single-seed findings; seeds 29 and 41 are required before
+claiming a stable ranking.
+
 ![Bounded checkpoint CFD, prediction and error fields](docs/assets/bounded_pipeline_prediction_v0_2.png)
 
 ![Real AirfRANS pressure, velocity and turbulent-viscosity reference fields](docs/assets/airfrans_reference_case_v0_1.png)

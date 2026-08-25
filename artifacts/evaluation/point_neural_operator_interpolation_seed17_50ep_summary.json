@@ -1,0 +1,19 @@
+{
+  "evidence_label": "airfrans_official_split_result_summary",
+  "model": "point_neural_operator",
+  "task": "interpolation",
+  "seed": 17,
+  "epochs_requested": 50,
+  "official_test_cases": 200,
+  "full_mesh": true,
+  "best_validation_mean_relative_l2": 0.6645306961018003,
+  "test_mean_relative_l2": {"velocity_x": 0.4283087921058906, "velocity_y": 1.0442704703884407, "pressure": 1.2433970401821839, "turbulent_viscosity": 0.8017822369504924},
+  "test_mean_force_absolute_error": {"drag": 0.3695302917131258, "lift": 0.2959251225526054},
+  "training_elapsed_seconds": 597.4561292689996,
+  "test_elapsed_seconds": 468.4275983810048,
+  "checkpoint_sha256": "5eb2834d055ee560056626fc04cb86c3ef0531ba51dd3627f136d23d6c49b5a0",
+  "aggregate_result_sha256": "a9075c95eb9e72749197d777d80e50e02d6c36d1a6f7812313ddf7c5198d75ab",
+  "raw_per_case_json_files": 200,
+  "checksummed_files": 205,
+  "limitations": ["Single seed; repeat-seed uncertainty is pending."]
+}
