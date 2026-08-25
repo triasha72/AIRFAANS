@@ -106,6 +106,13 @@ useful repeat but not yet the preregistered three-seed estimate. Its raw records
 were checked in the live Kaggle session, and the durable compact summary is in
 `artifacts/evaluation/mesh_graph_net_interpolation_seed29_50ep_summary.json`.
 
+The seed-29 point neural operator is now complete under the same contract.
+Relative L2 was `0.41084` for velocity-x, `1.03226` for velocity-y, `1.19613`
+for pressure, and `0.80435` for turbulent viscosity; drag and lift MAE were
+`0.32790` and `0.29857`. Together with the earlier seed-29 MLP and MeshGraphNet
+runs, this completes the second matched architecture pass. Seed 41 remains
+necessary before reporting three-seed means and variation.
+
 ![Bounded checkpoint CFD, prediction and error fields](docs/assets/bounded_pipeline_prediction_v0_2.png)
 
 ![Real AirfRANS pressure, velocity and turbulent-viscosity reference fields](docs/assets/airfrans_reference_case_v0_1.png)

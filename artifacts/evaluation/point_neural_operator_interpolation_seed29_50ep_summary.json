@@ -1,0 +1,49 @@
+{
+  "evidence_label": "airfrans_official_split_result_summary",
+  "coursework": "AE 6394",
+  "model": "point_neural_operator",
+  "task": "interpolation",
+  "seed": 29,
+  "epochs_requested": 50,
+  "official_test_cases": 200,
+  "full_mesh": true,
+  "best_validation_mean_relative_l2": 0.6662426223234919,
+  "test_mean": {
+    "relative_l2": {
+      "velocity_x": 0.41083765384316334,
+      "velocity_y": 1.032264211638866,
+      "pressure": 1.19612717583733,
+      "turbulent_viscosity": 0.8043526239528966
+    },
+    "rmse": {
+      "velocity_x": 20.485282412142904,
+      "velocity_y": 28.437981530111426,
+      "pressure": 2254.0821535608834,
+      "turbulent_viscosity": 0.0020566514420138782
+    },
+    "mae": {
+      "velocity_x": 14.870137807679338,
+      "velocity_y": 15.501077500582683,
+      "pressure": 1294.7050918016828,
+      "turbulent_viscosity": 0.0011673346927408169
+    }
+  },
+  "test_mean_force_absolute_error": {
+    "drag": 0.32790358918789975,
+    "lift": 0.29856537347292045
+  },
+  "test_elapsed_seconds": 521.9982007479994,
+  "checkpoint_sha256": "c9f0a44814804f767ff96aade6f924bdba119035efe38ab120d139c5c153cc05",
+  "aggregate_result_sha256": "54f6b2cbdcc033bfcb8581b3913ecd7d7e895bcde0d77b973e223cd80cbef1ff",
+  "raw_artifact_inventory": {
+    "per_case_json_files": 200,
+    "checksummed_files_before_manifest": 205,
+    "manifest_sha256": "91cd9460c5252486e2d8aae5949cc455e3f6d8b4757de07a9f8c89182af7df88",
+    "location_at_measurement": "/kaggle/working/results/point_neural_operator-interpolation-seed29-50ep"
+  },
+  "limitations": [
+    "This is the second measured point-neural-operator seed; seed 41 is still required for the preregistered three-seed comparison.",
+    "The seed-29 architecture comparison is complete, but a stable architecture ranking requires seed 41.",
+    "The compact summary is durable in GitHub, but the raw Kaggle directory remains session-scoped until separately exported."
+  ]
+}

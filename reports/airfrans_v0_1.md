@@ -54,6 +54,14 @@ tied to checkpoint SHA-256
 Seed 41 and the remaining seed-29 architecture treatment are still required;
 therefore no three-seed mean or variance is reported yet.
 
+The seed-29 point neural operator subsequently completed all 200 official test
+meshes. Mean relative L2 was `0.41084` (velocity-x), `1.03226` (velocity-y),
+`1.19613` (pressure), and `0.80435` (turbulent viscosity); drag and lift MAE
+were `0.32790` and `0.29857`. The result is tied to checkpoint SHA-256
+`c9f0a44814804f767ff96aade6f924bdba119035efe38ab120d139c5c153cc05`.
+This completes the matched seed-29 architecture pass, but seed 41 remains
+pending for all three models.
+
 ## Complete-pipeline coursework check
 
 The complete experimental workflow has now been checked on real, disjoint
