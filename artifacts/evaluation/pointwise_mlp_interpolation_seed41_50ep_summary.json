@@ -1,0 +1,49 @@
+{
+  "evidence_label": "airfrans_official_split_result_summary",
+  "coursework": "AE 6394",
+  "model": "pointwise_mlp",
+  "task": "interpolation",
+  "seed": 41,
+  "epochs_requested": 50,
+  "official_test_cases": 200,
+  "full_mesh": true,
+  "best_validation_mean_relative_l2": 0.7566308910021472,
+  "test_mean": {
+    "relative_l2": {
+      "velocity_x": 0.41562462388905,
+      "velocity_y": 0.7506275057294709,
+      "pressure": 0.9911776229198318,
+      "turbulent_viscosity": 0.8228923445231535
+    },
+    "rmse": {
+      "velocity_x": 20.704259988225814,
+      "velocity_y": 18.91582856692001,
+      "pressure": 1653.5928521803248,
+      "turbulent_viscosity": 0.002113123213996999
+    },
+    "mae": {
+      "velocity_x": 15.604115952212528,
+      "velocity_y": 12.291142063140022,
+      "pressure": 1081.8146691977408,
+      "turbulent_viscosity": 0.001163110326026224
+    }
+  },
+  "test_mean_force_absolute_error": {
+    "drag": 0.3461747392306094,
+    "lift": 0.5212531554327966
+  },
+  "test_elapsed_seconds": 439.6588586750004,
+  "checkpoint_sha256": "ac2f6aec2acae727c8fe32d1bd559540ce446a439d9bbd1b668047967375a8f3",
+  "aggregate_result_sha256": "b4b98f2a1b15596a23640f01aef35c0012588c69d68d2853e9bb75ec890aa714",
+  "raw_artifact_inventory": {
+    "per_case_json_files": 200,
+    "checksummed_files_before_manifest": 205,
+    "manifest_sha256": "bba83a5572313fbe7a674e27509bccb7f76b815b92a0e77fb5d1e43e18e59de5",
+    "location_at_measurement": "/kaggle/working/results/pointwise_mlp-interpolation-seed41-50ep"
+  },
+  "limitations": [
+    "This completes three Pointwise MLP seeds, but the seed-41 MeshGraphNet and point-operator treatments remain pending.",
+    "Architecture-level three-seed statistics must wait until all matched seed-41 treatments finish.",
+    "The compact summary is durable in GitHub, but the raw Kaggle directory remains session-scoped until separately exported."
+  ]
+}
