@@ -38,7 +38,8 @@ authors. AirfRANS data and model weights are not redistributed here.
 | Multi-case experiment runner | Train-only normalization, sampling, validation, early stopping and best checkpoints | `src/airfaans/experiment.py` |
 | End-to-end checkpoint run | Real train/validation/test cases traversed the complete CPU pipeline | `artifacts/evaluation/bounded_pipeline_v0_2/result.json` |
 | Pressure + viscous force convention | Exact match to official AirfRANS implementation; five reference cases frozen | `artifacts/evaluation/airfrans_force_verification_v0_1.json` |
-| AirfRANS interpolation/OOD measurements | Pending dataset/GPU execution | `reports/airfrans_v0_1.md` |
+| MeshGraphNet interpolation measurement | 200/200 official test cases, full meshes, seed 17 | `artifacts/evaluation/mesh_graph_net_interpolation_seed17_50ep_summary.json` |
+| Matched architecture/seeds and OOD measurements | Pending GPU execution | `reports/airfrans_v0_1.md` |
 | Ensemble UQ and active learning | Metrics/selection implemented; experiment pending | tests and config |
 | FastAPI and Docker | Implemented; checkpoint required for inference | `/health`, `/v1/predict` |
 
@@ -63,6 +64,18 @@ case, and three epochs. It created and reloaded a hashed best checkpoint, then
 produced held-out field metrics and the diagnostic below. Its poor errors are
 expected at this budget and demonstrate the evaluation boundary—not surrogate
 performance.
+
+The first official full-mesh GPU treatment is now complete. A 50-epoch,
+seed-17 MeshGraphNet-style model selected a checkpoint at validation mean
+relative L2 `0.60575`, then evaluated all 200 official interpolation test cases.
+Mean test relative L2 was `0.40125` for velocity-x, `0.74875` for velocity-y,
+`0.82612` for pressure, and `0.78855` for turbulent viscosity. Mean absolute
+force-coefficient error was `0.30122` for drag and `0.52682` for lift. The
+full-mesh evaluation took `1,121.88 s` on a Kaggle GPU session. Every case was
+persisted separately before aggregation and tied to checkpoint SHA-256
+`66e7b3bc19dc2a6582c80ddaab5a561d92029289d4d726fef6e24c01df140295`.
+This is credible single-treatment evidence, not yet a model ranking: matched
+budgets, additional seeds, the point operator, and OOD tasks remain pending.
 
 ![Bounded checkpoint CFD, prediction and error fields](docs/assets/bounded_pipeline_prediction_v0_2.png)
 

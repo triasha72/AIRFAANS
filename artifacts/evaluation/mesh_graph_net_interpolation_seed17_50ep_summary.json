@@ -1,0 +1,53 @@
+{
+  "evidence_label": "airfrans_official_split_result_summary",
+  "coursework": "AE 6394",
+  "model": "mesh_graph_net",
+  "task": "interpolation",
+  "seed": 17,
+  "epochs_requested": 50,
+  "official_test_cases": 200,
+  "full_mesh": true,
+  "best_validation_mean_relative_l2": 0.6057466310028696,
+  "test_mean": {
+    "relative_l2": {
+      "velocity_x": 0.4012528788301672,
+      "velocity_y": 0.7487473546433759,
+      "pressure": 0.8261198464342905,
+      "turbulent_viscosity": 0.7885524239367832
+    },
+    "rmse": {
+      "velocity_x": 19.820119844231886,
+      "velocity_y": 17.614056944093473,
+      "pressure": 1442.561367373659,
+      "turbulent_viscosity": 0.001946803591067921
+    },
+    "mae": {
+      "velocity_x": 14.899915353543726,
+      "velocity_y": 10.969270524328836,
+      "pressure": 828.5767056305203,
+      "turbulent_viscosity": 0.0009466846508523936
+    }
+  },
+  "test_mean_force_absolute_error": {
+    "drag": 0.3012173852057946,
+    "lift": 0.5268244798386055
+  },
+  "test_elapsed_seconds": 1121.8759413870084,
+  "checkpoint_sha256": "66e7b3bc19dc2a6582c80ddaab5a561d92029289d4d726fef6e24c01df140295",
+  "aggregate_result_sha256": "4e674c7a32ea067526f3b170cb0416ddd74401a61a92284d4566a2c9f738b51a",
+  "transfer_bundle": {
+    "filename": "AIRFAANS-meshgraphnet-seed17-official-fullmesh.tar.gz",
+    "bytes": 14211198,
+    "sha256": "800ac2d5f4e923531b5dda2ec4ff0d3dfd91d3935bdc82e3157c16d7262d8e8f"
+  },
+  "raw_artifact_inventory": {
+    "per_case_json_files": 200,
+    "checksummed_files_before_manifest": 206,
+    "location_at_measurement": "/kaggle/working/results/mesh_graph_net-interpolation-seed17-50ep"
+  },
+  "limitations": [
+    "This is one seed and one architecture, not a variance estimate or architecture ranking.",
+    "The treatment used 50 requested epochs; the earlier Pointwise MLP run used 200 and is not a matched-budget comparison.",
+    "The raw artifact directory was verified in the live Kaggle session; durable external publication is tracked separately."
+  ]
+}

@@ -1,8 +1,8 @@
 # AirfRANS field-surrogate comparison v0.1
 
-Status: real-data ingestion verified; GPU model training and evaluation pending.
+Status: first official full-mesh GPU treatment complete; matched benchmark in progress.
 
-No AirfRANS model-performance result is claimed in this report yet. The official
+The first AirfRANS model-performance result is now recorded below. The official
 1,000-case task manifest has been frozen, and one real simulation has traversed
 VTK loading, field validation, surface-normal alignment, and mesh-graph
 construction. The resulting 181,794-node, 724,640-edge artifact is tied to the
@@ -13,6 +13,35 @@ the same simulation. The 512-node, 100-step CPU run reduced normalized training
 MSE by 64.4% (MLP), 87.7% (MeshGraphNet), and 67.5% (point operator). These are
 training-loss sanity checks, not held-out metrics or evidence that one model is
 better than another.
+
+## Official MeshGraphNet interpolation treatment
+
+The seed-17 MeshGraphNet-style treatment requested 50 epochs on two Kaggle T4
+GPUs for training. Its selected checkpoint reached validation mean relative L2
+`0.6057466310` (best epoch 43). Evaluation was then run rank-zero on every node
+of all 200 official interpolation test cases. Because full-mesh force recovery
+can outlive an interactive session, evaluation was split into independently
+persisted case records. Aggregation required all 200 official indices and one
+common checkpoint hash.
+
+| Metric | velocity-x | velocity-y | pressure | turbulent viscosity |
+|---|---:|---:|---:|---:|
+| Mean relative L2 | 0.401253 | 0.748747 | 0.826120 | 0.788552 |
+| Mean RMSE | 19.820120 | 17.614057 | 1442.561367 | 0.001947 |
+| Mean MAE | 14.899915 | 10.969271 | 828.576706 | 0.000947 |
+
+Mean absolute force-coefficient error was `0.301217` for drag and `0.526824`
+for lift. Full-test evaluation took `1,121.876 s`. The checkpoint SHA-256 is
+`66e7b3bc19dc2a6582c80ddaab5a561d92029289d4d726fef6e24c01df140295`; the
+aggregate `result.json` SHA-256 is
+`4e674c7a32ea067526f3b170cb0416ddd74401a61a92284d4566a2c9f738b51a`.
+
+These numbers show a functioning geometry-aware surrogate and expose where the
+model is still weak: velocity-x is materially easier than cross-flow velocity,
+pressure, and turbulent viscosity, and force errors are not yet small enough
+for design use. This treatment is one seed and one 50-epoch budget. It is not a
+fair ranking against the earlier 200-epoch Pointwise MLP run, so that comparison
+is deferred until matched-budget reruns exist.
 
 ## End-to-end bounded run
 
@@ -62,7 +91,7 @@ every mesh node and report total, pressure, and viscous CL/CD contributions.
 | Task | Model | Pressure rel. L2 | Velocity rel. L2 | nu_t rel. L2 | CL MAE | CD MAE | Mean ± variation |
 |---|---|---:|---:|---:|---:|---:|---|
 | Full/interpolation | Pointwise MLP | Pending | Pending | Pending | Pending | Pending | Pending |
-| Full/interpolation | MeshGraphNet | Pending | Pending | Pending | Pending | Pending | Pending |
+| Full/interpolation | MeshGraphNet | 0.8261 | ux 0.4013; uy 0.7487 | 0.7886 | 0.5268 | 0.3012 | seed 17 only |
 | Full/interpolation | Point operator | Pending | Pending | Pending | Pending | Pending | Pending |
 | Reynolds OOD | Pointwise MLP | Pending | Pending | Pending | Pending | Pending | Pending |
 | Reynolds OOD | MeshGraphNet | Pending | Pending | Pending | Pending | Pending | Pending |
