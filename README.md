@@ -45,7 +45,8 @@ authors. AirfRANS data and model weights are not redistributed here.
 | Complete-pipeline coursework check | Real train/validation/test cases traversed the complete CPU workflow | `artifacts/evaluation/bounded_pipeline_v0_2/result.json` |
 | Pressure + viscous force convention | Exact match to official AirfRANS implementation; five reference cases frozen | `artifacts/evaluation/airfrans_force_verification_v0_1.json` |
 | MeshGraphNet interpolation measurement | 200/200 official test cases, full meshes, seed 17 | `artifacts/evaluation/mesh_graph_net_interpolation_seed17_50ep_summary.json` |
-| Matched architecture/seeds and OOD measurements | Pending GPU execution | `reports/airfrans_v0_1.md` |
+| Matched three-seed architecture comparison | Complete: 9 treatments × 200 official full meshes | `artifacts/evaluation/interpolation_three_seed_summary.json` |
+| Scarce-data and OOD measurements | Pending GPU execution | `reports/airfrans_v0_1.md` |
 | Ensemble UQ and active learning | Metrics/selection implemented; experiment pending | tests and config |
 | Optional demonstration interface | FastAPI and Docker exercise the checkpoint boundary; no production deployment is claimed | `/health`, `/v1/predict` |
 
@@ -80,8 +81,9 @@ force-coefficient error was `0.30122` for drag and `0.52682` for lift. The
 full-mesh evaluation took `1,121.88 s` on a Kaggle GPU session. Every case was
 persisted separately before aggregation and tied to checkpoint SHA-256
 `66e7b3bc19dc2a6582c80ddaab5a561d92029289d4d726fef6e24c01df140295`.
-This is credible single-treatment evidence, not yet a model ranking: matched
-budgets, additional seeds, the point operator, and OOD tasks remain pending.
+This was the first credible single-treatment result. The matched architecture
+and seed evidence reported below now supersedes it for model comparison; OOD
+tasks remain pending.
 
 The matched 50-epoch, seed-17 architecture pass is now complete on all 200
 official interpolation test meshes:
@@ -95,8 +97,8 @@ official interpolation test meshes:
 At this budget, no architecture dominates every output: MeshGraphNet is best
 on pressure, turbulent viscosity, and drag, while the pointwise MLP is best on
 both velocity components and lift. The compact point operator trails the two
-baselines. These are single-seed findings; seeds 29 and 41 are required before
-claiming a stable ranking.
+baselines. This table is retained as the seed-17 view; the completed three-seed
+result below is the appropriate basis for the current ranking.
 
 A second MeshGraphNet treatment (seed 29, the same 50-epoch contract) has also
 completed all 200 official interpolation meshes. Relative L2 was `0.36349` for
@@ -112,6 +114,22 @@ for pressure, and `0.80435` for turbulent viscosity; drag and lift MAE were
 `0.32790` and `0.29857`. Together with the earlier seed-29 MLP and MeshGraphNet
 runs, this completes the second matched architecture pass. Seed 41 remains
 necessary before reporting three-seed means and variation.
+
+The preregistered three-seed interpolation comparison is now complete. Values
+below are mean ± sample standard deviation over seeds 17, 29, and 41; every
+treatment used 50 epochs and all 200 official full-mesh test cases.
+
+| Model | ux rel. L2 | uy rel. L2 | pressure rel. L2 | nu_t rel. L2 | CD MAE | CL MAE |
+|---|---:|---:|---:|---:|---:|---:|
+| Pointwise MLP | 0.3993 ± 0.0141 | 0.7242 ± 0.0230 | 0.9550 ± 0.0314 | 0.7979 ± 0.0219 | 0.3663 ± 0.0221 | 0.3546 ± 0.1460 |
+| MeshGraphNet | **0.3788 ± 0.0199** | **0.6703 ± 0.0720** | **0.7693 ± 0.0557** | **0.6895 ± 0.0859** | **0.2319 ± 0.0619** | 0.3907 ± 0.1705 |
+| Point neural operator | 0.4183 ± 0.0090 | 1.0314 ± 0.0133 | 1.2125 ± 0.0268 | 0.8127 ± 0.0167 | 0.3544 ± 0.0230 | **0.2843 ± 0.0225** |
+
+MeshGraphNet has the lowest mean error for all four predicted fields and drag.
+The compact point operator has the lowest mean lift error, so no architecture
+wins every reported quantity. These conclusions apply only to this split,
+budget, and implementation; OOD and scarce-data behavior remain separate
+questions.
 
 ![Bounded checkpoint CFD, prediction and error fields](docs/assets/bounded_pipeline_prediction_v0_2.png)
 

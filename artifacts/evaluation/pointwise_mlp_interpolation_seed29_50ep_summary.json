@@ -1,0 +1,29 @@
+{
+  "evidence_label": "airfrans_official_split_result_summary",
+  "coursework": "AE 6394",
+  "model": "pointwise_mlp",
+  "task": "interpolation",
+  "seed": 29,
+  "epochs_requested": 50,
+  "official_test_cases": 200,
+  "full_mesh": true,
+  "best_validation_mean_relative_l2": 0.7064547818072131,
+  "test_mean_relative_l2": {
+    "velocity_x": 0.3919554302170026,
+    "velocity_y": 0.7128260335133715,
+    "pressure": 0.9382295014297384,
+    "turbulent_viscosity": 0.7820416692827
+  },
+  "test_mean_force_absolute_error": {
+    "drag": 0.3900165707602489,
+    "lift": 0.2492623464706295
+  },
+  "training_elapsed_seconds": 667.54634412,
+  "checkpoint_sha256": "81402b27ad2a205745382d6fc7293c003cc708787fb4495d4bbefb737fd2e442",
+  "aggregate_result_sha256": "8c66247f32ed39a8c2fd102da9e30a718a86fc684800b399fa90a7c18095737f",
+  "checksummed_files": 205,
+  "limitations": [
+    "The preserved compact evidence records exact field and force metrics but not the evaluation elapsed time or checksum-manifest hash.",
+    "The raw Kaggle directory was verified during measurement but remains session-scoped until separately exported."
+  ]
+}

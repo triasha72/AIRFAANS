@@ -1,6 +1,6 @@
 # AirfRANS field-surrogate comparison v0.1
 
-Status: first official full-mesh GPU treatment complete; matched benchmark in progress.
+Status: matched three-seed interpolation benchmark complete; OOD studies pending.
 
 The first AirfRANS model-performance result is now recorded below. The official
 1,000-case task manifest has been frozen, and one real simulation has traversed
@@ -42,8 +42,9 @@ pressure, and turbulent viscosity, and force errors are not yet small enough
 for design use. The matched 50-epoch seed-17 pass is now complete for all three
 architectures. MeshGraphNet leads pressure and turbulent-viscosity relative L2
 and drag MAE; the Pointwise MLP leads both velocity components and lift MAE.
-The compact point operator does not win a reported metric. Seeds 29 and 41 are
-still required before treating this single-seed ordering as stable.
+The compact point operator does not win a reported metric. This was the
+seed-17 snapshot; the completed three-seed result below supersedes it for the
+current architecture comparison.
 
 The seed-29 MeshGraphNet repeat is also complete. It produced full-mesh mean
 relative L2 values of `0.36349` (velocity-x), `0.65474` (velocity-y), `0.71475`
@@ -61,6 +62,25 @@ were `0.32790` and `0.29857`. The result is tied to checkpoint SHA-256
 `c9f0a44814804f767ff96aade6f924bdba119035efe38ab120d139c5c153cc05`.
 This completes the matched seed-29 architecture pass, but seed 41 remains
 pending for all three models.
+
+## Three-seed matched interpolation result
+
+The 50-epoch comparison is complete for seeds 17, 29, and 41. Each treatment
+was evaluated on every node of all 200 official interpolation test cases.
+Values are mean ± sample standard deviation across seeds.
+
+| Model | ux rel. L2 | uy rel. L2 | pressure rel. L2 | nu_t rel. L2 | CD MAE | CL MAE |
+|---|---:|---:|---:|---:|---:|---:|
+| Pointwise MLP | 0.3993 ± 0.0141 | 0.7242 ± 0.0230 | 0.9550 ± 0.0314 | 0.7979 ± 0.0219 | 0.3663 ± 0.0221 | 0.3546 ± 0.1460 |
+| MeshGraphNet | **0.3788 ± 0.0199** | **0.6703 ± 0.0720** | **0.7693 ± 0.0557** | **0.6895 ± 0.0859** | **0.2319 ± 0.0619** | 0.3907 ± 0.1705 |
+| Point neural operator | 0.4183 ± 0.0090 | 1.0314 ± 0.0133 | 1.2125 ± 0.0268 | 0.8127 ± 0.0167 | 0.3544 ± 0.0230 | **0.2843 ± 0.0225** |
+
+The geometry-aware MeshGraphNet is the strongest field surrogate under this
+matched coursework contract and also has the lowest drag error. The compact
+point operator produces the lowest lift MAE but does not match MeshGraphNet on
+the field quantities. Lift error is notably seed-sensitive for both the MLP and
+MeshGraphNet. This supports a bounded conclusion about the tested interpolation
+setting, not a universal model ranking.
 
 ## Complete-pipeline coursework check
 

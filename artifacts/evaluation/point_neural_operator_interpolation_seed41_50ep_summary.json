@@ -1,0 +1,49 @@
+{
+  "evidence_label": "airfrans_official_split_result_summary",
+  "coursework": "AE 6394",
+  "model": "point_neural_operator",
+  "task": "interpolation",
+  "seed": 41,
+  "epochs_requested": 50,
+  "official_test_cases": 200,
+  "full_mesh": true,
+  "best_validation_mean_relative_l2": 0.6906492223719813,
+  "test_mean": {
+    "relative_l2": {
+      "velocity_x": 0.41590050038749665,
+      "velocity_y": 1.0176589811005363,
+      "pressure": 1.1978458337928226,
+      "turbulent_viscosity": 0.8318364229851423
+    },
+    "rmse": {
+      "velocity_x": 20.71711362013461,
+      "velocity_y": 28.27673856204339,
+      "pressure": 2200.6262635862663,
+      "turbulent_viscosity": 0.002126618456280197
+    },
+    "mae": {
+      "velocity_x": 15.39854436178085,
+      "velocity_y": 15.54074336365678,
+      "pressure": 1278.3101515128067,
+      "turbulent_viscosity": 0.0012735795805510336
+    }
+  },
+  "test_mean_force_absolute_error": {
+    "drag": 0.3657438861819179,
+    "lift": 0.2583577940581511
+  },
+  "test_elapsed_seconds": 467.88054248000117,
+  "checkpoint_sha256": "f3e1bb1e7da26a99b1fb1c15af9cc9131030189a0eaacb272480452827b43e82",
+  "aggregate_result_sha256": "e6eff5ea0e8d5b9ad8a0b9f23b3b5ac7b29096d0f694f8b6722884d74c62fde5",
+  "raw_artifact_inventory": {
+    "per_case_json_files": 200,
+    "checksummed_files_before_manifest": 205,
+    "manifest_sha256": "e4149cea58b83f6b1eb91cde62978d309940a9afd079ccaa459f3799d4e0b3dc",
+    "location_at_measurement": "/kaggle/working/results/point_neural_operator-interpolation-seed41-50ep"
+  },
+  "limitations": [
+    "This completes the preregistered three-seed matched interpolation comparison.",
+    "The comparison supports mean and sample-standard-deviation reporting but not claims beyond the tested split, budget, and model implementations.",
+    "The compact summary is durable in GitHub, but the raw Kaggle directory remains session-scoped until separately exported."
+  ]
+}

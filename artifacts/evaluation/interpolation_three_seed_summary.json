@@ -1,0 +1,53 @@
+{
+  "evidence_label": "airfrans_official_three_seed_summary",
+  "coursework": "AE 6394",
+  "task": "interpolation",
+  "seeds": [17, 29, 41],
+  "epochs_per_treatment": 50,
+  "official_full_mesh_test_cases_per_treatment": 200,
+  "variation": "sample_standard_deviation_across_seeds",
+  "models": {
+    "pointwise_mlp": {
+      "relative_l2_mean_sd": {
+        "velocity_x": [0.399315242, 0.014146688],
+        "velocity_y": [0.724193892, 0.022966727],
+        "pressure": [0.954978904, 0.031378063],
+        "turbulent_viscosity": [0.797903686, 0.021901281]
+      },
+      "force_mae_mean_sd": {
+        "drag": [0.366335164, 0.022131980],
+        "lift": [0.354572981, 0.146011696]
+      }
+    },
+    "mesh_graph_net": {
+      "relative_l2_mean_sd": {
+        "velocity_x": [0.378794220, 0.019872338],
+        "velocity_y": [0.670251232, 0.072004381],
+        "pressure": [0.769317727, 0.055718601],
+        "turbulent_viscosity": [0.689532233, 0.085852915]
+      },
+      "force_mae_mean_sd": {
+        "drag": [0.231940228, 0.061901866],
+        "lift": [0.390659770, 0.170498112]
+      }
+    },
+    "point_neural_operator": {
+      "relative_l2_mean_sd": {
+        "velocity_x": [0.418348982, 0.008989242],
+        "velocity_y": [1.031397888, 0.013326880],
+        "pressure": [1.212456683, 0.026808911],
+        "turbulent_viscosity": [0.812657095, 0.016659433]
+      },
+      "force_mae_mean_sd": {
+        "drag": [0.354392589, 0.023018135],
+        "lift": [0.284282763, 0.022490459]
+      }
+    }
+  },
+  "measured_conclusion": "MeshGraphNet has the lowest three-seed mean relative L2 for every predicted field and the lowest drag MAE. The compact point neural operator has the lowest mean lift MAE but the highest velocity-y and pressure errors. No model wins every reported quantity.",
+  "limitations": [
+    "Statistics cover three seeds, one official interpolation split, one 50-epoch budget, and the implementations in this repository.",
+    "The sample standard deviation describes seed sensitivity; it is not a population confidence interval.",
+    "OOD, scarce-data, uncertainty, active-learning, and scaling conclusions require separate measured treatments."
+  ]
+}
