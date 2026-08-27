@@ -1,5 +1,7 @@
 # AIRFAANS
 
+[Portfolio case study](https://triasha72.github.io/Portfolio/case-airfaans.html)
+
 Geometry-aware scientific machine learning for aerodynamic CFD fields.
 
 **Coursework project for AE 6394 at the Georgia Institute of Technology.**
