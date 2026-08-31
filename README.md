@@ -2,17 +2,48 @@
 
 [Portfolio case study](https://triasha72.github.io/Portfolio/case-airfaans.html)
 
-Geometry-aware scientific machine learning for aerodynamic CFD fields.
+AIRFAANS is my study of learned surrogates for aerodynamic CFD. Given an airfoil
+mesh and its operating conditions, the model predicts the flow field and the
+forces an engineer would use to compare designs.
 
 **Coursework project for AE 6394 at the Georgia Institute of Technology.**
 The repository documents the implementation and evidence produced for the
 project; it does not imply endorsement by Georgia Tech or the AirfRANS authors.
 
-This is a scientific machine-learning coursework study, not a sponsored
-engineering engagement or a production application. Its scope is to formulate
-and test a reproducible CFD-surrogate comparison, analyze measured results, and
-document limitations. The included command-line tools and optional API are
-research utilities for repeatability and demonstration, not a deployed service.
+This began as coursework and grew into a reproducible comparison of three model
+families. Every reported model result uses the official public AirfRANS data.
+The small analytic fixture in CI checks that the software runs; it is not
+presented as aerodynamic evidence.
+
+The useful question is not simply whether a model interpolates familiar cases.
+It is whether the model holds up at new Reynolds numbers and angles of attack,
+preserves lift and drag well enough to be informative, and becomes more
+uncertain when it leaves the conditions seen in training. Those harder checks
+are the focus of the remaining work.
+
+## Project story
+
+**Situation.** High-fidelity CFD is valuable during aircraft design, but running
+it for every candidate is expensive. A learned surrogate can shorten that loop,
+provided it does not hide poor force predictions or failure outside the training
+range.
+
+**Task.** I wanted a fair comparison of geometry-aware models on the official
+AirfRANS benchmark, using the complete meshes and the engineering quantities a
+designer would inspect.
+
+**Action.** I implemented a pointwise MLP, a MeshGraphNet-style model, and a
+point neural operator behind one data and evaluation contract. The experiment
+uses train-only normalization, validation-selected checkpoints, three matched
+seeds, all 200 interpolation test meshes, and force calculations checked against
+the official AirfRANS implementation. I then added ensemble uncertainty and
+active-learning evaluation for the OOD phase.
+
+**Result.** No model dominated every output. At seed 17, MeshGraphNet gave the
+lowest pressure relative L2 (`0.8261`) and drag-coefficient MAE (`0.3012`),
+while the MLP led velocity-x (`0.3904`), velocity-y (`0.7091`), and lift MAE
+(`0.2932`). That trade-off is more useful than naming one universal winner. OOD
+and uncertainty runs remain open and are labeled that way.
 
 AIRFAANS takes an airfoil mesh, freestream condition, Reynolds number, and angle
 of attack and predicts four values at every mesh node:
