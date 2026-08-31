@@ -1,0 +1,29 @@
+name: CFD experiment proposal
+description: Freeze a scientific question and evaluation contract before a run.
+title: "experiment: "
+labels: ["experiment"]
+body:
+  - type: textarea
+    id: hypothesis
+    attributes:
+      label: Hypothesis
+      description: What aerodynamic or modeling claim are we testing?
+    validations: {required: true}
+  - type: textarea
+    id: cases
+    attributes:
+      label: AirfRANS cases and split
+      description: Name the task, case manifest, training boundary, and protected evaluation cases.
+    validations: {required: true}
+  - type: textarea
+    id: metrics
+    attributes:
+      label: Field and force metrics
+      description: Include per-field error, lift and drag error, seeds, and OOD or uncertainty measures.
+    validations: {required: true}
+  - type: textarea
+    id: compute
+    attributes:
+      label: Compute and stopping rule
+      description: Record hardware, epochs, selection metric, and expected artifact paths.
+    validations: {required: true}
