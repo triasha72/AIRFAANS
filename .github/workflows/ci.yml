@@ -18,6 +18,12 @@ jobs:
       - run: ruff check .
       - run: pytest -q
       - run: airfaans demo --output artifacts/local/ci_demo.json
+      - name: Revalidate operational evidence completeness
+        run: |
+          python scripts/assess_operational_readiness.py \
+            artifacts/evaluation /tmp/airfaans_operational_readiness.json
+          diff -u artifacts/evaluation/operational_readiness_v1.json \
+            /tmp/airfaans_operational_readiness.json
   docker:
     runs-on: ubuntu-latest
     steps:

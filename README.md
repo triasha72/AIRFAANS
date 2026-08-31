@@ -50,6 +50,7 @@ authors. AirfRANS data and model weights are not redistributed here.
 | Matched three-seed architecture comparison | Complete: 9 treatments × 200 official full meshes | `artifacts/evaluation/interpolation_three_seed_summary.json` |
 | Scarce-data and OOD measurements | Pending GPU execution | `reports/airfrans_v0_1.md` |
 | Ensemble UQ and active learning | Metrics/selection implemented; experiment pending | tests and config |
+| Operational evidence gate | Implemented; currently rejects missing OOD/UQ/active-learning evidence | `artifacts/evaluation/operational_readiness_v1.json` |
 | Optional demonstration interface | FastAPI and Docker exercise the checkpoint boundary; no production deployment is claimed | `/health`, `/v1/predict` |
 
 The checked-in demo uses a deterministic analytic cylinder-like fixture. It

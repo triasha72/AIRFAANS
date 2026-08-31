@@ -1,0 +1,41 @@
+{
+  "schema_version": "1.0",
+  "policy": "airfaans-operational-readiness-v1",
+  "decision": "rejected",
+  "completed_tasks": [
+    "interpolation"
+  ],
+  "checks": {
+    "all_required_tasks": {
+      "passed": false,
+      "missing": [
+        "scarce",
+        "reynolds_ood",
+        "aoa_ood"
+      ]
+    },
+    "three_models_on_interpolation": {
+      "passed": true,
+      "value": 3
+    },
+    "three_seeds_on_interpolation": {
+      "passed": true,
+      "value": [
+        17,
+        29,
+        41
+      ]
+    },
+    "ensemble_uncertainty_evidence": {
+      "passed": false
+    },
+    "active_learning_evidence": {
+      "passed": false
+    }
+  },
+  "next_experiments": [
+    "Run three matched seeds for scarce, Reynolds-OOD, and AoA-OOD tasks.",
+    "Measure ensemble calibration, uncertainty-error correlation, and OOD/ID uncertainty ratio.",
+    "Compare uncertainty acquisition with seeded random acquisition under equal compute."
+  ]
+}
