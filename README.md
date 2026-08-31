@@ -330,6 +330,38 @@ The aggregator refuses to write `result.json` if an index is missing or any case
 was evaluated from a different checkpoint. Raw per-case JSON remains alongside
 the aggregate; compression is optional and is never the sole evidence copy.
 
+## OOD uncertainty and active-learning execution
+
+The ensemble runner loads independently seeded real-AirfRANS checkpoints of the
+same architecture, uses identical sampled nodes for every member, and records
+per-case field error, ensemble uncertainty, and uncertainty-error correlation.
+The same checkpoint ensemble can be evaluated on interpolation, Reynolds-OOD,
+and AoA-OOD splits, preventing a separately trained OOD model from contaminating
+the comparison.
+
+```bash
+airfaans evaluate-ensemble \
+  --dataset-root "$AIRFRANS_DATASET_ROOT" \
+  --checkpoint runs/seed17/best.pt --checkpoint runs/seed29/best.pt \
+  --checkpoint runs/seed41/best.pt \
+  --evaluation-task interpolation --output results/uq-id.json
+
+airfaans evaluate-ensemble \
+  --dataset-root "$AIRFRANS_DATASET_ROOT" \
+  --checkpoint runs/seed17/best.pt --checkpoint runs/seed29/best.pt \
+  --checkpoint runs/seed41/best.pt \
+  --evaluation-task reynolds_ood --output results/uq-reynolds.json
+
+airfaans compare-ood --id-report results/uq-id.json \
+  --ood-report results/uq-reynolds.json --output results/uq-ratio.json
+```
+
+`build_acquisition_round` freezes equal-sized uncertainty and seeded-random
+case selections from the same pool. Both arms must be retrained from scratch
+under equal compute. These commands make the pending experiment executable;
+they do not create OOD or active-learning claims until real checkpoint runs are
+published.
+
 ## Scaling path
 
 - Dask parallelizes independent VTK preprocessing tasks.

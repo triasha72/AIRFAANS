@@ -22,6 +22,7 @@ from airfaans.io import save_case
 from airfaans.physics import integrate_pressure_forces
 from airfaans.release import validate_release
 from airfaans.synthetic import make_case
+from airfaans.uq_experiment import compare_ood_uncertainty, evaluate_ensemble
 
 
 def training_summary(result: dict[str, object]) -> dict[str, object] | None:
@@ -110,6 +111,23 @@ def main() -> None:
     )
     release_parser.add_argument("--release-manifest", type=Path, required=True)
     release_parser.add_argument("--checkpoint", type=Path, required=True)
+    ensemble_parser = subparsers.add_parser(
+        "evaluate-ensemble", help="Evaluate a deep ensemble on an official ID or OOD task."
+    )
+    ensemble_parser.add_argument("--dataset-root", type=Path, required=True)
+    ensemble_parser.add_argument(
+        "--manifest", type=Path, default=Path("data/manifests/airfrans_tasks_v0_1.json")
+    )
+    ensemble_parser.add_argument("--checkpoint", type=Path, action="append", required=True)
+    ensemble_parser.add_argument("--evaluation-task", choices=tuple(TASK_SPLITS), required=True)
+    ensemble_parser.add_argument("--output", type=Path, required=True)
+    ensemble_parser.add_argument("--max-cases", type=int)
+    compare_parser = subparsers.add_parser(
+        "compare-ood", help="Compare ID and OOD uncertainty from the same ensemble."
+    )
+    compare_parser.add_argument("--id-report", type=Path, required=True)
+    compare_parser.add_argument("--ood-report", type=Path, required=True)
+    compare_parser.add_argument("--output", type=Path, required=True)
     args = parser.parse_args()
     if args.command == "demo":
         print(json.dumps(demo(args.output), indent=2))
@@ -164,6 +182,22 @@ def main() -> None:
         print(
             json.dumps(validate_release(args.release_manifest, args.checkpoint).__dict__, indent=2)
         )
+    elif args.command == "evaluate-ensemble":
+        result = evaluate_ensemble(
+            args.dataset_root,
+            args.manifest,
+            args.checkpoint,
+            args.evaluation_task,
+            args.output,
+            args.max_cases,
+        )
+        print(json.dumps(result["summary"], indent=2))
+    elif args.command == "compare-ood":
+        result = compare_ood_uncertainty(
+            json.loads(args.id_report.read_text()), json.loads(args.ood_report.read_text())
+        )
+        args.output.write_text(json.dumps(result, indent=2) + "\n")
+        print(json.dumps(result, indent=2))
 
 
 if __name__ == "__main__":
