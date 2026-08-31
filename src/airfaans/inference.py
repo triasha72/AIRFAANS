@@ -17,20 +17,34 @@ from airfaans.experiment import (
     sample_indices,
 )
 from airfaans.normalization import Normalization
+from airfaans.release import validate_release
 
 
 class CheckpointPredictor:
     """Load one experiment checkpoint and predict an indexed AirfRANS case."""
 
-    def __init__(self, checkpoint_path: Path, dataset_root: Path, device: str = "cpu") -> None:
+    def __init__(
+        self,
+        checkpoint_path: Path,
+        dataset_root: Path,
+        release_manifest: Path,
+        device: str = "cpu",
+    ) -> None:
         import torch
 
         self.torch = torch
         self.device = torch.device(device)
         self.checkpoint_path = Path(checkpoint_path)
         self.dataset_root = Path(dataset_root)
+        self.release = validate_release(release_manifest, self.checkpoint_path)
         payload = torch.load(self.checkpoint_path, map_location=self.device, weights_only=True)
         self.config = ExperimentConfig(**payload["config"])
+        if (self.config.model, self.config.task, self.config.seed) != (
+            self.release.model,
+            self.release.task,
+            self.release.seed,
+        ):
+            raise ValueError("checkpoint config does not match the validated release")
         self.normalization = Normalization.from_dict(payload["normalization"])
         self.model = build_model(self.config, len(self.normalization.feature_mean)).to(self.device)
         self.model.load_state_dict(payload["model"])
@@ -67,5 +81,5 @@ class CheckpointPredictor:
             "drag_coefficient": None,
             "mean_uncertainty": None,
             "model_latency_ms": (perf_counter() - started) * 1000.0,
-            "evidence_label": "checkpoint_inference_pressure_only_forces_not_verified",
+            "evidence_label": "validated_official_checkpoint_research_inference",
         }

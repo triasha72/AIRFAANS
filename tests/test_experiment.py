@@ -86,8 +86,17 @@ def test_distributed_partition_has_equal_disjoint_work():
 
 
 def test_aggregate_case_results_preserves_case_evidence():
-    metrics = {name: {field: 1.0 for field in ("velocity_x", "velocity_y", "pressure", "turbulent_viscosity")} for name in ("rmse", "mae", "relative_l2")}
-    case = {"case_id": "case-1", **metrics, "force_coefficients": {"absolute_error": {"drag": 0.2, "lift": 0.3}}}
+    metrics = {
+        name: {
+            field: 1.0 for field in ("velocity_x", "velocity_y", "pressure", "turbulent_viscosity")
+        }
+        for name in ("rmse", "mae", "relative_l2")
+    }
+    case = {
+        "case_id": "case-1",
+        **metrics,
+        "force_coefficients": {"absolute_error": {"drag": 0.2, "lift": 0.3}},
+    }
     result = aggregate_case_results([case], 4.0)
     assert result["case_count"] == 1
     assert result["per_case"][0]["case_id"] == "case-1"

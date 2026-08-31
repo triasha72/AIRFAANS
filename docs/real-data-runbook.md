@@ -124,3 +124,31 @@ uvicorn airfaans.api:app
 - Negative and inconclusive results remain in the report.
 - A second reviewer audits split identities and at least five derived-force cases.
 - Dataset authors and licenses are credited.
+
+## 9. Checkpoint release gate
+
+Do not point the API at `best.pt` alone. Create a reviewed JSON release manifest
+next to the durable evaluation artifact with these fields:
+
+```json
+{
+  "schema_version": "1.0",
+  "decision": "approved",
+  "intended_use": "research_case_inference",
+  "model": "mesh_graph_net",
+  "task": "interpolation",
+  "seed": 17,
+  "checkpoint_sha256": "<sha256>",
+  "evaluation_artifact": "../evaluation/interpolation-mesh-17/result.json",
+  "evaluation_sha256": "<sha256>",
+  "dataset_manifest": "../../data/manifests/airfrans_tasks_v0_1.json",
+  "dataset_manifest_sha256": "<sha256>",
+  "maximum_validation_mean_relative_l2": 0.7
+}
+```
+
+Paths are resolved relative to the release manifest. The ceiling is a review
+decision and must be set before deployment, not retrofitted to excuse a result.
+Run `airfaans validate-release` and retain its output with release evidence. The
+API repeats the same validation on startup and refuses bounded evidence,
+tampered files, split overlap, config mismatch, or a failed error ceiling.

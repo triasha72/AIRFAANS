@@ -259,7 +259,9 @@ def evaluate_cases(
     return summary
 
 
-def aggregate_case_results(per_case: list[dict[str, object]], elapsed_seconds: float) -> dict[str, object]:
+def aggregate_case_results(
+    per_case: list[dict[str, object]], elapsed_seconds: float
+) -> dict[str, object]:
     """Aggregate persisted full-mesh case records using the training metric contract."""
     if not per_case:
         raise ValueError("at least one evaluated case is required")
@@ -399,7 +401,9 @@ def aggregate_evaluation_shards(
         "evaluation_provenance": "resumable_per_case_full_mesh",
     }
     Path(output_dir).mkdir(parents=True, exist_ok=True)
-    (Path(output_dir) / "result.json").write_text(json.dumps(result, indent=2) + "\n", encoding="utf-8")
+    (Path(output_dir) / "result.json").write_text(
+        json.dumps(result, indent=2) + "\n", encoding="utf-8"
+    )
     return result
 
 

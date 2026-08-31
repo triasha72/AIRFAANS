@@ -60,12 +60,16 @@ def create_app(predictor=None):
 def predictor_from_environment():
     checkpoint = os.environ.get("AIRFAANS_CHECKPOINT")
     dataset_root = os.environ.get("AIRFAANS_DATASET_ROOT")
-    if not checkpoint or not dataset_root:
+    release_manifest = os.environ.get("AIRFAANS_RELEASE_MANIFEST")
+    if not checkpoint or not dataset_root or not release_manifest:
         return None
     from airfaans.inference import CheckpointPredictor
 
     return CheckpointPredictor(
-        Path(checkpoint), Path(dataset_root), os.environ.get("AIRFAANS_DEVICE", "cpu")
+        Path(checkpoint),
+        Path(dataset_root),
+        Path(release_manifest),
+        os.environ.get("AIRFAANS_DEVICE", "cpu"),
     )
 
 

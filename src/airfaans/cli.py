@@ -20,6 +20,7 @@ from airfaans.experiment import (
 from airfaans.graph import knn_graph
 from airfaans.io import save_case
 from airfaans.physics import integrate_pressure_forces
+from airfaans.release import validate_release
 from airfaans.synthetic import make_case
 
 
@@ -104,6 +105,11 @@ def main() -> None:
     )
     aggregate_parser.add_argument("--checkpoint", type=Path, required=True)
     aggregate_parser.add_argument("--output-dir", type=Path, required=True)
+    release_parser = subparsers.add_parser(
+        "validate-release", help="Verify checkpoint, evaluation, and dataset release evidence."
+    )
+    release_parser.add_argument("--release-manifest", type=Path, required=True)
+    release_parser.add_argument("--checkpoint", type=Path, required=True)
     args = parser.parse_args()
     if args.command == "demo":
         print(json.dumps(demo(args.output), indent=2))
@@ -133,14 +139,31 @@ def main() -> None:
         if summary is not None:
             print(json.dumps(summary, indent=2))
     elif args.command == "evaluate":
-        print(json.dumps(evaluate_checkpoint_shard(
-            args.dataset_root, args.manifest, args.checkpoint, args.output_dir,
-            args.start, args.count, not args.no_resume,
-        ), indent=2))
+        print(
+            json.dumps(
+                evaluate_checkpoint_shard(
+                    args.dataset_root,
+                    args.manifest,
+                    args.checkpoint,
+                    args.output_dir,
+                    args.start,
+                    args.count,
+                    not args.no_resume,
+                ),
+                indent=2,
+            )
+        )
     elif args.command == "aggregate":
-        print(json.dumps(aggregate_evaluation_shards(
-            args.manifest, args.checkpoint, args.output_dir
-        ), indent=2))
+        print(
+            json.dumps(
+                aggregate_evaluation_shards(args.manifest, args.checkpoint, args.output_dir),
+                indent=2,
+            )
+        )
+    elif args.command == "validate-release":
+        print(
+            json.dumps(validate_release(args.release_manifest, args.checkpoint).__dict__, indent=2)
+        )
 
 
 if __name__ == "__main__":

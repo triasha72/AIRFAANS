@@ -269,16 +269,28 @@ uvicorn airfaans.api:app --reload
 curl http://localhost:8000/health
 ```
 
-`/v1/predict` returns HTTP 503 until a trained, validated checkpoint is wired to
-the predictor boundary. That fail-closed behavior prevents the analytic fixture
-or an unvalidated model from appearing as an engineering result.
+`/v1/predict` returns HTTP 503 until a trained, validated checkpoint and its
+release manifest are wired to the predictor boundary. The release gate verifies
+the checkpoint, official-split evaluation, dataset manifest, split isolation,
+model configuration, and an explicitly approved validation-error ceiling before
+loading any weights. Bounded runs and modified artifacts fail closed.
 
 Configure checkpoint-backed inference with:
 
 ```bash
-export AIRFAANS_CHECKPOINT=artifacts/evaluation/bounded_pipeline_v0_2/best.pt
+export AIRFAANS_CHECKPOINT=artifacts/local/interpolation-mesh-17/best.pt
 export AIRFAANS_DATASET_ROOT=data/raw/airfrans/processed/Dataset
+export AIRFAANS_RELEASE_MANIFEST=artifacts/releases/interpolation-mesh-17.json
 uvicorn airfaans.api:app
+```
+
+The bounded checkpoint shown elsewhere in this repository is deliberately not
+eligible for a release manifest. Validate an official candidate before startup:
+
+```bash
+airfaans validate-release \
+  --release-manifest "$AIRFAANS_RELEASE_MANIFEST" \
+  --checkpoint "$AIRFAANS_CHECKPOINT"
 ```
 
 The endpoint predicts an indexed AirfRANS case and refuses Reynolds or angle
