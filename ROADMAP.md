@@ -32,3 +32,9 @@ useful.
 A credible next release needs field metrics, engineering force metrics, seed
 variation, and a useful relationship between uncertainty and error. A better
 interpolation average by itself will not close this gap.
+
+The readiness gate now checks usefulness, not file presence. Both OOD tasks
+must raise mean ensemble uncertainty by at least 10%, uncertainty/error
+correlation must reach 0.30, and uncertainty-guided acquisition must beat the
+matched random arm. Until the official compute run supplies those values, the
+release remains rejected.
