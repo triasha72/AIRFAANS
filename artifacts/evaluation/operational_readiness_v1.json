@@ -31,6 +31,26 @@
     },
     "active_learning_evidence": {
       "passed": false
+    },
+    "reynolds_ood_uncertainty_separation": {
+      "value": null,
+      "minimum": 1.1,
+      "passed": false
+    },
+    "aoa_ood_uncertainty_separation": {
+      "value": null,
+      "minimum": 1.1,
+      "passed": false
+    },
+    "uncertainty_tracks_error": {
+      "value": null,
+      "minimum": 0.3,
+      "passed": false
+    },
+    "active_learning_beats_random": {
+      "value": null,
+      "minimum_exclusive": 0.0,
+      "passed": false
     }
   },
   "next_experiments": [
