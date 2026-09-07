@@ -2,7 +2,27 @@
 
 [Portfolio case study](https://triasha72.github.io/Portfolio/case-airfaans.html)
 
-[Interview brief](docs/INTERVIEW_BRIEF.md) — the problem, evidence boundary, reproduction check, and next validation.
+[Project overview](docs/PROJECT_OVERVIEW.md) — the problem, evidence boundary, reproduction check, and next validation.
+
+[Problem statement](docs/PROJECT_PROBLEM_STATEMENT.md) — the design need, research question, scope, and success criteria.
+
+## In brief
+
+AIRFAANS compares three geometry-aware surrogates for airfoil CFD fields on the
+official AirfRANS interpolation task. MeshGraphNet had the lowest mean field
+and drag error in the completed three-seed study; OOD and uncertainty results
+remain pending and are not claimed here.
+
+## System architecture
+
+```mermaid
+flowchart LR
+    A[AirfRANS meshes and conditions] --> B[Simulation-level split\nand train-only normalization]
+    B --> C[MLP / MeshGraphNet /\npoint neural operator]
+    C --> D[Flow-field predictions]
+    D --> E[Field, lift, and drag evaluation]
+    E --> F[Frozen artifacts and readiness gate]
+```
 
 AIRFAANS is my study of learned surrogates for aerodynamic CFD. Given an airfoil
 mesh and its operating conditions, the model predicts the flow field and the
@@ -12,8 +32,9 @@ forces an engineer would use to compare designs.
 The repository documents the implementation and evidence produced for the
 project; it does not imply endorsement by Georgia Tech or the AirfRANS authors.
 
-This began as coursework and grew into a reproducible comparison of three model
-families. Every reported model result uses the official public AirfRANS data.
+This began as Georgia Tech AE 6394 coursework and was extended independently
+afterward into a reproducible comparison of three model families. Every
+reported model result uses the official public AirfRANS data.
 The small analytic fixture in CI checks that the software runs; it is not
 presented as aerodynamic evidence.
 

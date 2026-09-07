@@ -1,4 +1,4 @@
-# AIRFAANS interview brief
+# AIRFAANS project overview
 
 ## The problem
 
@@ -35,7 +35,7 @@ The demo is an analytic fixture for exercising the software path. It is not an
 AirfRANS or aerodynamic-performance result. The real-data setup and frozen
 artifacts are documented in the [README](../README.md).
 
-## The next validation
+## Next validation
 
 The important unfinished work is Reynolds-number and angle-of-attack OOD
 evaluation, uncertainty calibration, and uncertainty-guided simulation
