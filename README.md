@@ -2,6 +2,8 @@
 
 [Portfolio case study](https://triasha72.github.io/Portfolio/case-airfaans.html)
 
+[Interview brief](docs/INTERVIEW_BRIEF.md) — the problem, evidence boundary, reproduction check, and next validation.
+
 AIRFAANS is my study of learned surrogates for aerodynamic CFD. Given an airfoil
 mesh and its operating conditions, the model predicts the flow field and the
 forces an engineer would use to compare designs.
