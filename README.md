@@ -10,8 +10,9 @@
 
 AIRFAANS compares three geometry-aware surrogates for airfoil CFD fields on the
 official AirfRANS interpolation task. MeshGraphNet had the lowest mean field
-and drag error in the completed three-seed study; OOD and uncertainty results
-remain pending and are not claimed here.
+and drag error in the completed three-seed study. OOD, uncertainty, scarce-data,
+and active-learning studies are now in progress; no results are claimed here
+until their matched runs finish.
 
 ## System architecture
 
@@ -65,8 +66,9 @@ active-learning evaluation for the OOD phase.
 **Result.** No model dominated every output. At seed 17, MeshGraphNet gave the
 lowest pressure relative L2 (`0.8261`) and drag-coefficient MAE (`0.3012`),
 while the MLP led velocity-x (`0.3904`), velocity-y (`0.7091`), and lift MAE
-(`0.2932`). That trade-off is more useful than naming one universal winner. OOD
-and uncertainty runs remain open and are labeled that way.
+(`0.2932`). That trade-off is more useful than naming one universal winner. The
+OOD, uncertainty, scarce-data, and active-learning studies are in progress, and
+their results remain unreported until the matched runs finish.
 
 AIRFAANS takes an airfoil mesh, freestream condition, Reynolds number, and angle
 of attack and predicts four values at every mesh node:
@@ -102,8 +104,8 @@ authors. AirfRANS data and model weights are not redistributed here.
 | Pressure + viscous force convention | Exact match to official AirfRANS implementation; five reference cases frozen | `artifacts/evaluation/airfrans_force_verification_v0_1.json` |
 | MeshGraphNet interpolation measurement | 200/200 official test cases, full meshes, seed 17 | `artifacts/evaluation/mesh_graph_net_interpolation_seed17_50ep_summary.json` |
 | Matched three-seed architecture comparison | Complete: 9 treatments × 200 official full meshes | `artifacts/evaluation/interpolation_three_seed_summary.json` |
-| Scarce-data and OOD measurements | Pending GPU execution | `reports/airfrans_v0_1.md` |
-| Ensemble UQ and active learning | Metrics/selection implemented; experiment pending | tests and config |
+| Scarce-data and OOD measurements | Matched GPU execution in progress; no result reported yet | `reports/airfrans_v0_1.md` |
+| Ensemble UQ and active learning | Metrics/selection implemented; matched experiment in progress with no result reported yet | tests and config |
 | Operational evidence gate | Implemented; currently rejects missing OOD/UQ/active-learning evidence | `artifacts/evaluation/operational_readiness_v1.json` |
 | Optional demonstration interface | FastAPI and Docker exercise the checkpoint boundary; no production deployment is claimed | `/health`, `/v1/predict` |
 
@@ -140,7 +142,7 @@ persisted separately before aggregation and tied to checkpoint SHA-256
 `66e7b3bc19dc2a6582c80ddaab5a561d92029289d4d726fef6e24c01df140295`.
 This was the first credible single-treatment result. The matched architecture
 and seed evidence reported below now supersedes it for model comparison; OOD
-tasks remain pending.
+tasks are in progress and no result is reported here until they finish.
 
 The matched 50-epoch, seed-17 architecture pass is now complete on all 200
 official interpolation test meshes:
