@@ -6,7 +6,7 @@
 
 [Problem statement](docs/PROJECT_PROBLEM_STATEMENT.md) — the design need, research question, scope, and success criteria.
 
-## In brief
+## Overview
 
 AIRFAANS compares three geometry-aware surrogates for airfoil CFD fields on the
 official AirfRANS interpolation task. MeshGraphNet had the lowest mean field
@@ -45,7 +45,7 @@ preserves lift and drag well enough to be informative, and becomes more
 uncertain when it leaves the conditions seen in training. Those harder checks
 are the focus of the remaining work.
 
-## Project story
+## Background
 
 **Situation.** High-fidelity CFD is valuable during aircraft design, but running
 it for every candidate is expensive. A learned surrogate can shorten that loop,
