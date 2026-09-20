@@ -105,7 +105,7 @@ authors. AirfRANS data and model weights are not redistributed here.
 | Pressure + viscous force convention | Exact match to official AirfRANS implementation; five reference cases frozen | `artifacts/evaluation/airfrans_force_verification_v0_1.json` |
 | MeshGraphNet interpolation measurement | 200/200 official test cases, full meshes, seed 17 | `artifacts/evaluation/mesh_graph_net_interpolation_seed17_50ep_summary.json` |
 | Matched three-seed architecture comparison | Complete: 9 treatments × 200 official full meshes | `artifacts/evaluation/interpolation_three_seed_summary.json` |
-| Reynolds-OOD measurements | Partially complete: PNO seeds 29/41, MeshGraphNet seeds 29/41, and Pointwise MLP seed 41 have verified 496-case bundles | `reports/airfrans_v0_1.md` |
+| Reynolds-OOD measurements | Complete matched two-seed architecture matrix: Pointwise MLP, MeshGraphNet, and PNO seeds 29/41 all have verified 496-case bundles | `reports/airfrans_v0_1.md` |
 | Scarce-data and AoA-OOD measurements | Pending GPU execution | `reports/airfrans_v0_1.md` |
 | Ensemble UQ and active learning | Metrics/selection implemented; experiment pending | tests and config |
 | Operational evidence gate | Implemented; currently rejects missing OOD/UQ/active-learning evidence | `artifacts/evaluation/operational_readiness_v1.json` |
@@ -134,8 +134,9 @@ checkpoint SHA-256.
 | MeshGraphNet, seed 41 | `a410720d37701a705e1345d3daa072d7348f69a3f1d1d3737d8f0154595d2d46` | `1d4e857f68c25965686779c082b8c2287bc56c4fd79e3ba0122dd740baedd679` | Verified, 496/496 |
 | MeshGraphNet, seed 29 | `b136e05f00245aa52f23421a971dce9f3c5364712db27c9e692a86ce1280bb41` | `db9670d7175e716e6a9770ae8c628f794776b103aca62009a76c7fd80f619bb6` | Verified, 496/496 |
 | Pointwise MLP, seed 41 | `eb79c489667cc71f9ca3ff770ee09380681694b27b8c580e49a62d05e7b0fccb` | `f71602099b3250e2c06efb47cb70d2e35f116f3572d460241872a94908ad2ed5` | Verified, 496/496 |
+| Pointwise MLP, seed 29 | `c1657e57f28cb99ecbf85883af9a69cb70b9fbc9b3102d95d6da0b7b1d26687f` | `339104806781dec8b0553e7b554f58c89a6cc55628faa9fa7d48c610964daf43` | Verified, 496/496 |
 
-All five listed OOD treatments have passed the integrity gate. The remaining
+All six planned Reynolds-OOD treatments have passed the integrity gate. The remaining
 OOD/UQ/scarce-data studies are still pending and are not inferred from these
 results.
 
