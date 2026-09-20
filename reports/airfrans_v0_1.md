@@ -17,10 +17,12 @@ matching checkpoint SHA-256 across all records.
 | Point neural operator, seed 41 | `2d9849808f62e7862ac62c650214a1479f63384de083c5f561e6f7ef1cb7ec9a` | `40761d41f25f66e2929c068b9b4744e42cc63d990e7b9ba73485d956d0427046` | 496/496 |
 | MeshGraphNet, seed 41 | `a410720d37701a705e1345d3daa072d7348f69a3f1d1d3737d8f0154595d2d46` | `1d4e857f68c25965686779c082b8c2287bc56c4fd79e3ba0122dd740baedd679` | 496/496 |
 | MeshGraphNet, seed 29 | `b136e05f00245aa52f23421a971dce9f3c5364712db27c9e692a86ce1280bb41` | `db9670d7175e716e6a9770ae8c628f794776b103aca62009a76c7fd80f619bb6` | 496/496 |
+| Pointwise MLP, seed 41 | `eb79c489667cc71f9ca3ff770ee09380681694b27b8c580e49a62d05e7b0fccb` | `f71602099b3250e2c06efb47cb70d2e35f116f3572d460241872a94908ad2ed5` | 496/496 |
 
-MeshGraphNet seed 29 has now passed the same 496-case integrity check and is
-included in the verified OOD evidence ledger. No cross-treatment OOD ranking is
-reported until the remaining planned architectures and tasks are complete.
+MeshGraphNet seed 29 and Pointwise MLP seed 41 have passed the same 496-case
+integrity check and are included in the verified OOD evidence ledger. No
+cross-treatment OOD ranking is reported until the remaining planned
+architectures and tasks are complete.
 
 The first AirfRANS model-performance result is now recorded below. The official
 1,000-case task manifest has been frozen, and one real simulation has traversed
