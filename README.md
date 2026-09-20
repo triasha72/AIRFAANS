@@ -6,6 +6,8 @@
 
 [Problem statement](docs/PROJECT_PROBLEM_STATEMENT.md) — the design need, research question, scope, and success criteria.
 
+[3-D extension plan](docs/three-dimensional-extension.md) — tested 3-D mesh/graph interfaces and the evidence required before making a 3-D CFD claim.
+
 ## In brief
 
 AIRFAANS compares three geometry-aware surrogates for airfoil CFD fields on the
@@ -91,6 +93,7 @@ authors. AirfRANS data and model weights are not redistributed here.
 |---|---|---|
 | Typed mesh/field representation | Implemented and tested | `src/airfaans/data.py` |
 | Mesh-connectivity and k-NN graphs | Implemented and tested | `src/airfaans/graph.py` |
+| 3-D mesh/graph interface | 3-D coordinates and `(dx, dy, dz, distance)` edges tested with a synthetic fixture; no 3-D CFD claim | `docs/three-dimensional-extension.md` |
 | Pointwise MLP | Implemented | `src/airfaans/models.py` |
 | MeshGraphNet-style message passing | Implemented | `src/airfaans/models.py` |
 | Irregular-point neural operator | Implemented | `src/airfaans/models.py` |
@@ -102,7 +105,8 @@ authors. AirfRANS data and model weights are not redistributed here.
 | Pressure + viscous force convention | Exact match to official AirfRANS implementation; five reference cases frozen | `artifacts/evaluation/airfrans_force_verification_v0_1.json` |
 | MeshGraphNet interpolation measurement | 200/200 official test cases, full meshes, seed 17 | `artifacts/evaluation/mesh_graph_net_interpolation_seed17_50ep_summary.json` |
 | Matched three-seed architecture comparison | Complete: 9 treatments × 200 official full meshes | `artifacts/evaluation/interpolation_three_seed_summary.json` |
-| Scarce-data and OOD measurements | Pending GPU execution | `reports/airfrans_v0_1.md` |
+| Reynolds-OOD measurements | Partially complete: PNO seeds 29/41 and MeshGraphNet seed 41 have verified 496-case bundles; MeshGraphNet seed 29 is in evaluation | `reports/airfrans_v0_1.md` |
+| Scarce-data and AoA-OOD measurements | Pending GPU execution | `reports/airfrans_v0_1.md` |
 | Ensemble UQ and active learning | Metrics/selection implemented; experiment pending | tests and config |
 | Operational evidence gate | Implemented; currently rejects missing OOD/UQ/active-learning evidence | `artifacts/evaluation/operational_readiness_v1.json` |
 | Optional demonstration interface | FastAPI and Docker exercise the checkpoint boundary; no production deployment is claimed | `/health`, `/v1/predict` |
@@ -114,6 +118,24 @@ The real-data ingestion path has also been executed locally. One official
 AirfRANS training simulation produced 181,794 nodes, 1,025 surface nodes, and a
 724,640-edge mesh graph in 1.57 seconds on Apple Silicon. This is measured data
 engineering evidence, not model-accuracy evidence.
+
+## Verified Reynolds-OOD evidence (Drive-backed)
+
+The OOD workflow now has durable, resumable evidence for the treatments below.
+Each bundle contains the selected checkpoint, progress metadata, all per-case
+JSON records, and aggregate output. Aggregation is accepted only when all 496
+official full-mesh indices are present and every record has one matching
+checkpoint SHA-256.
+
+| Treatment | Checkpoint SHA-256 | Bundle SHA-256 | Status |
+|---|---|---|---|
+| Point neural operator, seed 29 | `6d01bb795417f7c0fef47b3898d1e921adc5170028a138cfa811c7e11b36ac9e` | `98e6e3521d226be1064b652e9264778725041487293552b9c809e7b639c18b8b` | Verified, 496/496 |
+| Point neural operator, seed 41 | `2d9849808f62e7862ac62c650214a1479f63384de083c5f561e6f7ef1cb7ec9a` | `40761d41f25f66e2929c068b9b4744e42cc63d990e7b9ba73485d956d0427046` | Verified, 496/496 |
+| MeshGraphNet, seed 41 | `a410720d37701a705e1345d3daa072d7348f69a3f1d1d3737d8f0154595d2d46` | `1d4e857f68c25965686779c082b8c2287bc56c4fd79e3ba0122dd740baedd679` | Verified, 496/496 |
+
+MeshGraphNet seed 29 has a verified epoch-50 checkpoint and is currently being
+evaluated with the same resumable protocol. No OOD aggregate is reported for
+that treatment until its 496 records and bundle pass the integrity gate.
 
 A bounded 512-node CPU optimization check also passed for all three model
 families. Over 100 steps, normalized training MSE fell by 64.4% for the MLP,
