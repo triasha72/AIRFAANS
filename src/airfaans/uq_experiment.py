@@ -266,7 +266,9 @@ def evaluate_ensemble_shard(
                     continue
                 raise ValueError(f"existing case record rejected with --no-resume: {position}")
             case = load_case(case_directory(dataset_root, case_ids[position]))
-            indices = sample_indices(case, configs[0].nodes_per_case, 900_000 + position)
+            # UQ evidence is evaluated on the complete official mesh, not the
+            # bounded node sample used while training.
+            indices = np.arange(len(case.points))
             predictions = []
             for (model, normalization), config in zip(members, configs, strict=True):
                 x, _, edges, edge_features = _case_tensors(
