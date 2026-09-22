@@ -66,9 +66,33 @@ def test_aggregate_ensemble_requires_complete_coverage(tmp_path: Path):
         aggregate_ensemble_records(tmp_path, _manifest(), "interpolation", expected_cases=2)
 
 
+def test_aggregate_reads_records_by_official_index_not_filename(tmp_path: Path):
+    manifest = _manifest()
+    records = tmp_path / "ensemble_cases"
+    records.mkdir()
+    for index, filename in ((0, "first.json"), (1, "second.json")):
+        _write_record(records / filename, manifest, index)
+        payload = __import__("json").loads((records / filename).read_text())
+        payload.update({"mean_uncertainty": float(index + 1), "uncertainty_error_correlation": 0.5})
+        (records / filename).write_text(__import__("json").dumps(payload))
+
+    result = aggregate_ensemble_records(tmp_path, manifest, "reynolds_ood", expected_cases=2)
+
+    assert result["case_count"] == 2
+    assert result["summary"]["mean_uncertainty"] == 1.5
+
+
 def test_compare_ood_rejects_reordered_hashes():
-    base = {"evaluation_task": "interpolation", "checkpoint_sha256": ["a", "b"], "summary": {"mean_uncertainty": 1.0}}
-    shifted = {"evaluation_task": "reynolds_ood", "checkpoint_sha256": ["b", "a"], "summary": {"mean_uncertainty": 1.2}}
+    base = {
+        "evaluation_task": "interpolation",
+        "checkpoint_sha256": ["a", "b"],
+        "summary": {"mean_uncertainty": 1.0},
+    }
+    shifted = {
+        "evaluation_task": "reynolds_ood",
+        "checkpoint_sha256": ["b", "a"],
+        "summary": {"mean_uncertainty": 1.2},
+    }
     with pytest.raises(ValueError, match="same ensemble checkpoints"):
         compare_ood_uncertainty(base, shifted)
 
@@ -78,7 +102,9 @@ def _checkpoint(path: Path, *, seed: int, model: str = "pointwise_mlp") -> dict[
     return {"config": {"seed": seed, "model": model, "task": "reynolds_ood"}}
 
 
-def _install_fake_torch(monkeypatch: pytest.MonkeyPatch, payloads: dict[Path, dict[str, object]]) -> None:
+def _install_fake_torch(
+    monkeypatch: pytest.MonkeyPatch, payloads: dict[Path, dict[str, object]]
+) -> None:
     monkeypatch.setitem(
         sys.modules,
         "torch",

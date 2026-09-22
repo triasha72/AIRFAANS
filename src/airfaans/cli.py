@@ -22,7 +22,12 @@ from airfaans.io import save_case
 from airfaans.physics import integrate_pressure_forces
 from airfaans.release import validate_release
 from airfaans.synthetic import make_case
-from airfaans.uq_experiment import compare_ood_uncertainty, evaluate_ensemble
+from airfaans.uq_experiment import (
+    aggregate_ensemble_records,
+    compare_ood_uncertainty,
+    evaluate_ensemble_shard,
+    load_ensemble_manifest,
+)
 
 
 def training_summary(result: dict[str, object]) -> dict[str, object] | None:
@@ -120,8 +125,21 @@ def main() -> None:
     )
     ensemble_parser.add_argument("--checkpoint", type=Path, action="append", required=True)
     ensemble_parser.add_argument("--evaluation-task", choices=tuple(TASK_SPLITS), required=True)
-    ensemble_parser.add_argument("--output", type=Path, required=True)
-    ensemble_parser.add_argument("--max-cases", type=int)
+    ensemble_parser.add_argument("--output-dir", type=Path, required=True)
+    ensemble_parser.add_argument("--start", type=int, default=0)
+    ensemble_parser.add_argument("--count", type=int)
+    ensemble_parser.add_argument("--no-resume", action="store_true")
+    aggregate_ensemble_parser = subparsers.add_parser(
+        "aggregate-ensemble", help="Validate all ensemble case records and write a report."
+    )
+    aggregate_ensemble_parser.add_argument(
+        "--checkpoint", type=Path, action="append", required=True
+    )
+    aggregate_ensemble_parser.add_argument(
+        "--evaluation-task", choices=tuple(TASK_SPLITS), required=True
+    )
+    aggregate_ensemble_parser.add_argument("--output-dir", type=Path, required=True)
+    aggregate_ensemble_parser.add_argument("--expected-cases", type=int, required=True)
     compare_parser = subparsers.add_parser(
         "compare-ood", help="Compare ID and OOD uncertainty from the same ensemble."
     )
@@ -183,13 +201,21 @@ def main() -> None:
             json.dumps(validate_release(args.release_manifest, args.checkpoint).__dict__, indent=2)
         )
     elif args.command == "evaluate-ensemble":
-        result = evaluate_ensemble(
+        result = evaluate_ensemble_shard(
             args.dataset_root,
             args.manifest,
             args.checkpoint,
             args.evaluation_task,
-            args.output,
-            args.max_cases,
+            args.output_dir,
+            args.start,
+            args.count,
+            not args.no_resume,
+        )
+        print(json.dumps(result, indent=2))
+    elif args.command == "aggregate-ensemble":
+        manifest = load_ensemble_manifest(args.checkpoint)
+        result = aggregate_ensemble_records(
+            args.output_dir, manifest, args.evaluation_task, args.expected_cases
         )
         print(json.dumps(result["summary"], indent=2))
     elif args.command == "compare-ood":
