@@ -143,6 +143,39 @@ def audit_ensemble_records(
     )
 
 
+def aggregate_ensemble_records(
+    output_dir: Path,
+    manifest: EnsembleManifest,
+    evaluation_task: str,
+    expected_cases: int,
+) -> dict[str, object]:
+    """Aggregate only a complete, provenance-checked set of ensemble records."""
+    records_dir = output_dir / "ensemble_cases"
+    audit = audit_ensemble_records(records_dir, manifest, evaluation_task, expected_cases)
+    if audit.next_missing_index is not None:
+        raise ValueError("incomplete coverage; aggregate report not written")
+    per_case = [
+        json.loads((records_dir / f"{index}.json").read_text(encoding="utf-8"))
+        for index in range(expected_cases)
+    ]
+    result = {
+        "schema_version": "1.0",
+        "evidence_label": "airfrans_ensemble_uq_summary",
+        "training_task": manifest.training_task,
+        "evaluation_task": evaluation_task,
+        "model": manifest.model,
+        "seeds": list(manifest.seeds),
+        "checkpoint_sha256": list(manifest.checkpoint_sha256),
+        "ensemble_size": len(manifest.seeds),
+        "case_count": expected_cases,
+        "bounded": False,
+        "summary": summarize_uq_cases(per_case),
+        "per_case": per_case,
+    }
+    write_json_atomic(output_dir / "ensemble_result.json", result)
+    return result
+
+
 def summarize_uq_cases(per_case: list[dict[str, object]]) -> dict[str, float]:
     if not per_case:
         raise ValueError("at least one case is required")
@@ -156,7 +189,7 @@ def summarize_uq_cases(per_case: list[dict[str, object]]) -> dict[str, float]:
 
 def compare_ood_uncertainty(id_report: dict[str, object], ood_report: dict[str, object]):
     if id_report["checkpoint_sha256"] != ood_report["checkpoint_sha256"]:
-        raise ValueError("ID and OOD reports must use the same ensemble checkpoints")
+        raise ValueError("ID and OOD reports must use the same ensemble checkpoints in order")
     baseline = float(id_report["summary"]["mean_uncertainty"])
     if baseline <= 0:
         raise ValueError("ID uncertainty must be positive")
