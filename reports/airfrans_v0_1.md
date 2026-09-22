@@ -1,6 +1,29 @@
 # AirfRANS field-surrogate comparison v0.1
 
-Status: matched three-seed interpolation benchmark complete; OOD studies pending.
+Status: matched three-seed interpolation benchmark complete; Reynolds-OOD
+evidence is partially complete and remains under the same checkpoint-integrity
+gate used for the interpolation benchmark.
+
+## Reynolds-OOD evidence ledger
+
+The following Drive-backed bundles are verified. Each contains the checkpoint,
+progress metadata, raw per-case records, and aggregate output. A result is
+accepted only after checking 496 unique official full-mesh indices and a single
+matching checkpoint SHA-256 across all records.
+
+| Treatment | Checkpoint SHA-256 | Bundle SHA-256 | Coverage |
+|---|---|---|---|
+| Point neural operator, seed 29 | `6d01bb795417f7c0fef47b3898d1e921adc5170028a138cfa811c7e11b36ac9e` | `98e6e3521d226be1064b652e9264778725041487293552b9c809e7b639c18b8b` | 496/496 |
+| Point neural operator, seed 41 | `2d9849808f62e7862ac62c650214a1479f63384de083c5f561e6f7ef1cb7ec9a` | `40761d41f25f66e2929c068b9b4744e42cc63d990e7b9ba73485d956d0427046` | 496/496 |
+| MeshGraphNet, seed 41 | `a410720d37701a705e1345d3daa072d7348f69a3f1d1d3737d8f0154595d2d46` | `1d4e857f68c25965686779c082b8c2287bc56c4fd79e3ba0122dd740baedd679` | 496/496 |
+| MeshGraphNet, seed 29 | `b136e05f00245aa52f23421a971dce9f3c5364712db27c9e692a86ce1280bb41` | `db9670d7175e716e6a9770ae8c628f794776b103aca62009a76c7fd80f619bb6` | 496/496 |
+| Pointwise MLP, seed 41 | `eb79c489667cc71f9ca3ff770ee09380681694b27b8c580e49a62d05e7b0fccb` | `f71602099b3250e2c06efb47cb70d2e35f116f3572d460241872a94908ad2ed5` | 496/496 |
+| Pointwise MLP, seed 29 | `c1657e57f28cb99ecbf85883af9a69cb70b9fbc9b3102d95d6da0b7b1d26687f` | `339104806781dec8b0553e7b554f58c89a6cc55628faa9fa7d48c610964daf43` | 496/496 |
+
+MeshGraphNet seed 29 and Pointwise MLP seeds 29 and 41 have passed the same
+496-case integrity check and are included in the verified OOD evidence ledger. No
+cross-treatment OOD ranking is reported until the remaining planned
+architectures and tasks are complete.
 
 The first AirfRANS model-performance result is now recorded below. The official
 1,000-case task manifest has been frozen, and one real simulation has traversed
