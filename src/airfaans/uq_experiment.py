@@ -34,6 +34,13 @@ class EnsembleManifest:
     checkpoint_sha256: tuple[str, ...]
 
 
+@dataclass(frozen=True)
+class EnsembleAudit:
+    expected_cases: int
+    saved_cases: int
+    next_missing_index: int | None
+
+
 def _sha256(path: Path) -> str:
     digest = hashlib.sha256()
     with path.open("rb") as handle:
@@ -78,6 +85,61 @@ def load_ensemble_manifest(checkpoint_paths: list[Path]) -> EnsembleManifest:
         seeds=seeds,
         checkpoint_paths=tuple(resolved_paths),
         checkpoint_sha256=tuple(hashes),
+    )
+
+
+def write_json_atomic(path: Path, payload: dict[str, object]) -> None:
+    """Make a case record visible only after its JSON body is complete."""
+    path.parent.mkdir(parents=True, exist_ok=True)
+    temporary = path.with_suffix(".json.tmp")
+    temporary.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
+    temporary.replace(path)
+
+
+def audit_ensemble_records(
+    records_dir: Path,
+    manifest: EnsembleManifest,
+    evaluation_task: str,
+    expected_cases: int,
+) -> EnsembleAudit:
+    """Fail closed on incomplete, duplicate, or mixed-provenance case records."""
+    if expected_cases <= 0:
+        raise ValueError("expected_cases must be positive")
+    indexes: set[int] = set()
+    for record_path in sorted(records_dir.glob("*.json")):
+        try:
+            record = json.loads(record_path.read_text(encoding="utf-8"))
+        except json.JSONDecodeError as error:
+            raise ValueError(f"invalid JSON record: {record_path}") from error
+        provenance = (
+            record.get("evaluation_task"),
+            record.get("model"),
+            record.get("training_task"),
+            tuple(record.get("seeds", [])),
+            tuple(record.get("checkpoint_sha256", [])),
+        )
+        expected = (
+            evaluation_task,
+            manifest.model,
+            manifest.training_task,
+            manifest.seeds,
+            manifest.checkpoint_sha256,
+        )
+        if provenance != expected:
+            raise ValueError(
+                f"mixed-provenance record rejected: {record_path.name}; "
+                f"expected={expected!r}, found={provenance!r}"
+            )
+        index = record.get("official_test_index")
+        if not isinstance(index, int) or not 0 <= index < expected_cases:
+            raise ValueError(f"invalid official_test_index in {record_path.name}: {index!r}")
+        if index in indexes:
+            raise ValueError(f"duplicate official_test_index rejected: {index}")
+        indexes.add(index)
+    return EnsembleAudit(
+        expected_cases=expected_cases,
+        saved_cases=len(indexes),
+        next_missing_index=next((index for index in range(expected_cases) if index not in indexes), None),
     )
 
 
