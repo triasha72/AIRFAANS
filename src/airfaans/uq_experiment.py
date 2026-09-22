@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+from dataclasses import dataclass
 from pathlib import Path
 
 import numpy as np
@@ -20,6 +21,64 @@ from airfaans.experiment import (
     sample_indices,
 )
 from airfaans.normalization import Normalization
+
+
+@dataclass(frozen=True)
+class EnsembleManifest:
+    """Identity boundary for a frozen set of ensemble checkpoints."""
+
+    model: str
+    training_task: str
+    seeds: tuple[int, ...]
+    checkpoint_paths: tuple[str, ...]
+    checkpoint_sha256: tuple[str, ...]
+
+
+def _sha256(path: Path) -> str:
+    digest = hashlib.sha256()
+    with path.open("rb") as handle:
+        for block in iter(lambda: handle.read(1024 * 1024), b""):
+            digest.update(block)
+    return digest.hexdigest()
+
+
+def load_ensemble_manifest(checkpoint_paths: list[Path]) -> EnsembleManifest:
+    """Load checkpoint metadata and reject an ensemble with mixed identity."""
+    import torch
+
+    if len(checkpoint_paths) < 2:
+        raise ValueError("deep-ensemble evaluation requires at least two checkpoints")
+    identities: list[tuple[str, str, int]] = []
+    hashes: list[str] = []
+    resolved_paths: list[str] = []
+    for path in checkpoint_paths:
+        path = Path(path)
+        if not path.is_file():
+            raise ValueError(f"checkpoint does not exist: {path}")
+        payload = torch.load(path, map_location="cpu", weights_only=True)
+        config = payload.get("config")
+        if not isinstance(config, dict):
+            raise ValueError(f"checkpoint has no serialized config: {path}")
+        model, task, seed = config.get("model"), config.get("task"), config.get("seed")
+        if not isinstance(model, str) or not isinstance(task, str) or not isinstance(seed, int):
+            raise ValueError(f"checkpoint config is incomplete: {path}")
+        identities.append((model, task, seed))
+        hashes.append(_sha256(path))
+        resolved_paths.append(str(path.resolve()))
+    model_tasks = {(model, task) for model, task, _ in identities}
+    if len(model_tasks) != 1:
+        raise ValueError("ensemble members must share model and training task")
+    seeds = tuple(seed for _, _, seed in identities)
+    if len(set(seeds)) != len(seeds):
+        raise ValueError("ensemble members must use distinct seeds")
+    model, task = next(iter(model_tasks))
+    return EnsembleManifest(
+        model=model,
+        training_task=task,
+        seeds=seeds,
+        checkpoint_paths=tuple(resolved_paths),
+        checkpoint_sha256=tuple(hashes),
+    )
 
 
 def summarize_uq_cases(per_case: list[dict[str, object]]) -> dict[str, float]:
