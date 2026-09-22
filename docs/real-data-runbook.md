@@ -92,6 +92,66 @@ Train three independently seeded members for uncertainty. Report calibration,
 uncertainty-error correlation, and the mean OOD/ID uncertainty ratio. A useful
 OOD detector should rise under extrapolation; report honestly if it does not.
 
+### Restart-safe ensemble evaluation
+
+Keep checkpoints and evaluation records on persistent storage. For example, in
+Colab mount Drive first and use a dedicated directory for each task; do not mix
+ID and OOD records in the same folder. The evaluator writes one complete JSON
+record per official test case, so a lost runtime can resume without discarding
+finished work.
+
+Run a small smoke shard before committing GPU time to the full task:
+
+```bash
+airfaans evaluate-ensemble \
+  --dataset-root /content/airfrans_data/Dataset \
+  --manifest data/manifests/airfrans_tasks_v0_1.json \
+  --checkpoint /content/drive/MyDrive/AIRFAANS/checkpoints/seed29/best.pt \
+  --checkpoint /content/drive/MyDrive/AIRFAANS/checkpoints/seed41/best.pt \
+  --evaluation-task reynolds_ood \
+  --output-dir /content/drive/MyDrive/AIRFAANS/uq/reynolds_ood \
+  --start 0 --count 2
+```
+
+Then run the remaining cases. Re-running the same command skips only records
+whose task, member order, seed list, and checkpoint hashes still match:
+
+```bash
+airfaans evaluate-ensemble \
+  --dataset-root /content/airfrans_data/Dataset \
+  --manifest data/manifests/airfrans_tasks_v0_1.json \
+  --checkpoint /content/drive/MyDrive/AIRFAANS/checkpoints/seed29/best.pt \
+  --checkpoint /content/drive/MyDrive/AIRFAANS/checkpoints/seed41/best.pt \
+  --evaluation-task reynolds_ood \
+  --output-dir /content/drive/MyDrive/AIRFAANS/uq/reynolds_ood
+```
+
+Before an interrupted run is resumed, inspect the saved state. This writes
+`resume_state.json` beside the case records and reports the first missing case:
+
+```bash
+python scripts/resume_ensemble_evaluation.py \
+  --output-dir /content/drive/MyDrive/AIRFAANS/uq/reynolds_ood \
+  --checkpoint /content/drive/MyDrive/AIRFAANS/checkpoints/seed29/best.pt \
+  --checkpoint /content/drive/MyDrive/AIRFAANS/checkpoints/seed41/best.pt \
+  --evaluation-task reynolds_ood --expected-cases 496
+```
+
+Only after the saved count equals the official test count, generate the report:
+
+```bash
+airfaans aggregate-ensemble \
+  --checkpoint /content/drive/MyDrive/AIRFAANS/checkpoints/seed29/best.pt \
+  --checkpoint /content/drive/MyDrive/AIRFAANS/checkpoints/seed41/best.pt \
+  --evaluation-task reynolds_ood \
+  --output-dir /content/drive/MyDrive/AIRFAANS/uq/reynolds_ood \
+  --expected-cases 496
+```
+
+Repeat in a separate directory for interpolation before comparing OOD and ID
+uncertainty. A two-member result is exploratory ensemble evidence, not a
+calibration study; record that limitation with the result.
+
 ## 6. Active-learning comparison
 
 Freeze an initial 10% simulation set. At each acquisition round select the same

@@ -139,7 +139,9 @@ def audit_ensemble_records(
     return EnsembleAudit(
         expected_cases=expected_cases,
         saved_cases=len(indexes),
-        next_missing_index=next((index for index in range(expected_cases) if index not in indexes), None),
+        next_missing_index=next(
+            (index for index in range(expected_cases) if index not in indexes), None
+        ),
     )
 
 
@@ -154,10 +156,14 @@ def aggregate_ensemble_records(
     audit = audit_ensemble_records(records_dir, manifest, evaluation_task, expected_cases)
     if audit.next_missing_index is not None:
         raise ValueError("incomplete coverage; aggregate report not written")
-    per_case = [
-        json.loads((records_dir / f"{index}.json").read_text(encoding="utf-8"))
-        for index in range(expected_cases)
-    ]
+    records_by_index = {
+        record["official_test_index"]: record
+        for record in (
+            json.loads(record_path.read_text(encoding="utf-8"))
+            for record_path in records_dir.glob("*.json")
+        )
+    }
+    per_case = [records_by_index[index] for index in range(expected_cases)]
     result = {
         "schema_version": "1.0",
         "evidence_label": "airfrans_ensemble_uq_summary",
@@ -202,6 +208,109 @@ def compare_ood_uncertainty(id_report: dict[str, object], ood_report: dict[str, 
         "checkpoint_sha256": id_report["checkpoint_sha256"],
         "ood_to_id_uncertainty_ratio": ratio,
         "passed_predeclared_ratio": ratio > 1.0,
+    }
+
+
+def evaluate_ensemble_shard(
+    dataset_root: Path,
+    manifest_path: Path,
+    checkpoint_paths: list[Path],
+    evaluation_task: str,
+    output_dir: Path,
+    start: int = 0,
+    count: int | None = None,
+    resume: bool = True,
+) -> dict[str, object]:
+    """Evaluate a restart-safe slice of an official test set.
+
+    Each completed case is committed independently, so a runtime interruption
+    leaves previous records reusable only after provenance validation.
+    """
+    import torch
+
+    manifest = load_ensemble_manifest(checkpoint_paths)
+    if start < 0:
+        raise ValueError("start must be non-negative")
+    if count is not None and count <= 0:
+        raise ValueError("count must be positive when supplied")
+
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    members = []
+    configs = []
+    for path in checkpoint_paths:
+        payload = torch.load(path, map_location=device, weights_only=True)
+        config = ExperimentConfig(**payload["config"])
+        normalization = Normalization.from_dict(payload["normalization"])
+        model = build_model(config, len(normalization.feature_mean)).to(device)
+        model.load_state_dict(payload["model"])
+        model.eval()
+        members.append((model, normalization))
+        configs.append(config)
+
+    _, _, case_ids = official_split(manifest_path, evaluation_task, configs[0].validation_cases)
+    expected_cases = len(case_ids)
+    if start >= expected_cases:
+        raise ValueError(f"start={start} is outside {expected_cases} official test cases")
+    stop = expected_cases if count is None else min(expected_cases, start + count)
+    records_dir = output_dir / "ensemble_cases"
+    audit_ensemble_records(records_dir, manifest, evaluation_task, expected_cases)
+    saved_indexes = {
+        json.loads(record_path.read_text(encoding="utf-8"))["official_test_index"]
+        for record_path in records_dir.glob("*.json")
+    }
+    evaluated = 0
+    with torch.inference_mode():
+        for position in range(start, stop):
+            if position in saved_indexes:
+                if resume:
+                    continue
+                raise ValueError(f"existing case record rejected with --no-resume: {position}")
+            case = load_case(case_directory(dataset_root, case_ids[position]))
+            indices = sample_indices(case, configs[0].nodes_per_case, 900_000 + position)
+            predictions = []
+            for (model, normalization), config in zip(members, configs, strict=True):
+                x, _, edges, edge_features = _case_tensors(
+                    case, normalization, indices, device, config.model
+                )
+                normalized = _forward(model, config.model, x, edges, edge_features)
+                predictions.append(normalization.inverse_targets(normalized.cpu().numpy()))
+            mean, standard_deviation = ensemble_summary(np.asarray(predictions))
+            write_json_atomic(
+                records_dir / f"{position}.json",
+                {
+                    "schema_version": "1.0",
+                    "evidence_label": "airfrans_ensemble_case",
+                    "official_test_index": position,
+                    "case_id": case_ids[position],
+                    "training_task": manifest.training_task,
+                    "evaluation_task": evaluation_task,
+                    "model": manifest.model,
+                    "seeds": list(manifest.seeds),
+                    "checkpoint_sha256": list(manifest.checkpoint_sha256),
+                    "field_metrics": field_metrics(case.targets[indices], mean),
+                    "mean_uncertainty": float(
+                        np.mean(np.linalg.norm(standard_deviation, axis=1))
+                    ),
+                    "uncertainty_error_correlation": uncertainty_error_correlation(
+                        case.targets[indices], mean, standard_deviation
+                    ),
+                },
+            )
+            evaluated += 1
+    audit = audit_ensemble_records(records_dir, manifest, evaluation_task, expected_cases)
+    return {
+        "schema_version": "1.0",
+        "evidence_label": "airfrans_ensemble_shard",
+        "evaluation_task": evaluation_task,
+        "model": manifest.model,
+        "seeds": list(manifest.seeds),
+        "checkpoint_sha256": list(manifest.checkpoint_sha256),
+        "requested_start": start,
+        "requested_stop": stop,
+        "evaluated_cases": evaluated,
+        "saved_cases": audit.saved_cases,
+        "expected_cases": expected_cases,
+        "next_missing_index": audit.next_missing_index,
     }
 
 
