@@ -8,81 +8,79 @@
 
 [3-D extension plan](docs/three-dimensional-extension.md) — tested 3-D mesh/graph interfaces and the evidence required before making a 3-D CFD claim.
 
-## In brief
+## What this project is
 
-AIRFAANS compares three geometry-aware surrogates for airfoil CFD fields on the
-official AirfRANS interpolation task. MeshGraphNet had the lowest mean field
-and drag error in the completed three-seed study; OOD and uncertainty results
-remain pending and are not claimed here.
+AIRFAANS asks a practical question: can a machine-learning model predict an
+airfoil flow field quickly enough to help with engineering work, without hiding
+when it is wrong? The input is a CFD mesh plus operating conditions. The output
+is velocity, pressure, and turbulent viscosity at every node of that mesh. From
+those fields, the evaluation also recovers lift and drag.
+
+This is not a claim that ML replaces CFD. It is a careful comparison of three
+surrogate models on the public AirfRANS benchmark, with the checks needed to
+understand what each model gets right, where it breaks down, and how repeatable
+the result is.
+
+## How it started
+
+I began AIRFAANS in Georgia Tech AE 6394 because many scientific-ML examples
+stop at a field-loss number. For aerodynamic work, that is not enough. A model
+can look good on an average error metric and still give poor pressure, lift, or
+drag estimates. I wanted to compare several model families on the same CFD
+data, under the same split and training budget, and evaluate full meshes rather
+than a handful of sampled points.
+
+The work continued after the course as a reproducible research project. All
+reported model results use the official public AirfRANS data. The small analytic
+fixture used in CI only checks that the software runs; it is not aerodynamic
+evidence.
+
+## What I built and why
+
+- A shared data path for irregular meshes, simulation-level splits, and
+  train-only normalization. This prevents nodes from the same CFD solution from
+  leaking between training and test data.
+- Three model families: a pointwise MLP, a MeshGraphNet-style graph network,
+  and a point neural operator. They offer different trade-offs between local
+  geometry, message passing, and global context.
+- Full-mesh field, lift, and drag evaluation. Field metrics show local error;
+  force metrics show whether the output remains useful for an engineering
+  comparison.
+- Checkpoint hashes, per-case records, resumable evaluation, and saved evidence
+  bundles. Long GPU runs can disconnect, so the result must survive outside the
+  notebook session and be traceable to one exact checkpoint.
 
 ## System architecture
 
 ```mermaid
 flowchart LR
-    A[AirfRANS meshes and conditions] --> B[Simulation-level split\nand train-only normalization]
+    A[AirfRANS mesh + flight condition] --> B[Simulation-level split\nand train-only normalization]
     B --> C[MLP / MeshGraphNet /\npoint neural operator]
-    C --> D[Flow-field predictions]
-    D --> E[Field, lift, and drag evaluation]
-    E --> F[Frozen artifacts and readiness gate]
+    C --> D[Velocity, pressure,\nand turbulence predictions]
+    D --> E[Full-mesh field error\nplus lift and drag]
+    E --> F[Checkpoint hash, case records,\nand saved evidence bundle]
 ```
-
-AIRFAANS is my study of learned surrogates for aerodynamic CFD. Given an airfoil
-mesh and its operating conditions, the model predicts the flow field and the
-forces an engineer would use to compare designs.
 
 **Coursework project for AE 6394 at the Georgia Institute of Technology.**
 The repository documents the implementation and evidence produced for the
 project; it does not imply endorsement by Georgia Tech or the AirfRANS authors.
 
-This began as Georgia Tech AE 6394 coursework and was extended independently
-afterward into a reproducible comparison of three model families. Every
-reported model result uses the official public AirfRANS data.
-The small analytic fixture in CI checks that the software runs; it is not
-presented as aerodynamic evidence.
+## What the completed work shows
 
-The useful question is not simply whether a model interpolates familiar cases.
-It is whether the model holds up at new Reynolds numbers and angles of attack,
-preserves lift and drag well enough to be informative, and becomes more
-uncertain when it leaves the conditions seen in training. Those harder checks
-are the focus of the remaining work.
+For the matched interpolation study, each of the three models was trained with
+seeds 17, 29, and 41 and evaluated on all 200 official full-mesh test cases.
+MeshGraphNet had the lowest mean error for the four predicted fields and drag.
+The point neural operator had the lowest mean lift error. That is a useful
+engineering result because it avoids pretending that one model is best for every
+quantity.
 
-## Project story
-
-**Situation.** High-fidelity CFD is valuable during aircraft design, but running
-it for every candidate is expensive. A learned surrogate can shorten that loop,
-provided it does not hide poor force predictions or failure outside the training
-range.
-
-**Task.** I wanted a fair comparison of geometry-aware models on the official
-AirfRANS benchmark, using the complete meshes and the engineering quantities a
-designer would inspect.
-
-**Action.** I implemented a pointwise MLP, a MeshGraphNet-style model, and a
-point neural operator behind one data and evaluation contract. The experiment
-uses train-only normalization, validation-selected checkpoints, three matched
-seeds, all 200 interpolation test meshes, and force calculations checked against
-the official AirfRANS implementation. I then added ensemble uncertainty and
-active-learning evaluation for the OOD phase.
-
-**Result.** No model dominated every output. At seed 17, MeshGraphNet gave the
-lowest pressure relative L2 (`0.8261`) and drag-coefficient MAE (`0.3012`),
-while the MLP led velocity-x (`0.3904`), velocity-y (`0.7091`), and lift MAE
-(`0.2932`). That trade-off is more useful than naming one universal winner. OOD
-and uncertainty runs remain open and are labeled that way.
-
-AIRFAANS takes an airfoil mesh, freestream condition, Reynolds number, and angle
-of attack and predicts four values at every mesh node:
-
-```text
-(geometry, Re, angle of attack) -> (velocity_x, velocity_y, pressure, turbulent viscosity)
-```
-
-The project compares a pointwise MLP, a residual MeshGraphNet-style model, and a
-global point operator. The evaluation contract covers interpolation, scarce-data
-learning, Reynolds-number extrapolation, and angle-of-attack extrapolation. It
-also checks whether predicted fields preserve pressure coefficient and integrated
-lift and drag, whether ensemble uncertainty rises out of distribution, and
-whether uncertainty-guided simulation selection beats random selection.
+The repository also contains six verified Reynolds-OOD treatments: all three
+architectures at seeds 29 and 41, each with 496 saved full-mesh case records.
+A two-seed scarce-data Pointwise MLP replication is complete with 200 saved
+full-mesh records per seed. These results are durable and traceable, but they do
+not answer every generalization question. Angle-of-attack OOD, calibrated
+uncertainty, active-learning gains, hardware scaling, and 3-D CFD evidence are
+still open work.
 
 AIRFAANS is an independent project, not part of or endorsed by the AirfRANS
 authors. AirfRANS data and model weights are not redistributed here.
@@ -106,7 +104,8 @@ authors. AirfRANS data and model weights are not redistributed here.
 | MeshGraphNet interpolation measurement | 200/200 official test cases, full meshes, seed 17 | `artifacts/evaluation/mesh_graph_net_interpolation_seed17_50ep_summary.json` |
 | Matched three-seed architecture comparison | Complete: 9 treatments × 200 official full meshes | `artifacts/evaluation/interpolation_three_seed_summary.json` |
 | Reynolds-OOD measurements | Complete matched two-seed architecture matrix: Pointwise MLP, MeshGraphNet, and PNO seeds 29/41 all have verified 496-case bundles | `reports/airfrans_v0_1.md` |
-| Scarce-data and AoA-OOD measurements | Pending GPU execution | `reports/airfrans_v0_1.md` |
+| Scarce-data measurement | Complete: Pointwise MLP seeds 17 and 23, 200 full meshes per seed | Drive-backed evidence bundle |
+| AoA-OOD measurement | Not run | `reports/airfrans_v0_1.md` |
 | Ensemble UQ and active learning | Metrics/selection implemented; experiment pending | tests and config |
 | Operational evidence gate | Implemented; currently rejects missing OOD/UQ/active-learning evidence | `artifacts/evaluation/operational_readiness_v1.json` |
 | Optional demonstration interface | FastAPI and Docker exercise the checkpoint boundary; no production deployment is claimed | `/health`, `/v1/predict` |
@@ -136,9 +135,10 @@ checkpoint SHA-256.
 | Pointwise MLP, seed 41 | `eb79c489667cc71f9ca3ff770ee09380681694b27b8c580e49a62d05e7b0fccb` | `f71602099b3250e2c06efb47cb70d2e35f116f3572d460241872a94908ad2ed5` | Verified, 496/496 |
 | Pointwise MLP, seed 29 | `c1657e57f28cb99ecbf85883af9a69cb70b9fbc9b3102d95d6da0b7b1d26687f` | `339104806781dec8b0553e7b554f58c89a6cc55628faa9fa7d48c610964daf43` | Verified, 496/496 |
 
-All six planned Reynolds-OOD treatments have passed the integrity gate. The remaining
-OOD/UQ/scarce-data studies are still pending and are not inferred from these
-results.
+All six planned Reynolds-OOD treatments have passed the integrity gate. The
+separate two-seed scarce-data Pointwise MLP study is also complete. Angle-of-
+attack OOD, uncertainty calibration, and active-learning studies are still open
+and are not inferred from these results.
 
 A bounded 512-node CPU optimization check also passed for all three model
 families. Over 100 steps, normalized training MSE fell by 64.4% for the MLP,
@@ -210,8 +210,8 @@ treatment used 50 epochs and all 200 official full-mesh test cases.
 MeshGraphNet has the lowest mean error for all four predicted fields and drag.
 The compact point operator has the lowest mean lift error, so no architecture
 wins every reported quantity. These conclusions apply only to this split,
-budget, and implementation; OOD and scarce-data behavior remain separate
-questions.
+budget, and implementation; OOD and scarce-data behavior are evaluated in their
+own studies.
 
 ![Bounded checkpoint CFD, prediction and error fields](docs/assets/bounded_pipeline_prediction_v0_2.png)
 
