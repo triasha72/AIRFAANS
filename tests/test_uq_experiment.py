@@ -7,6 +7,7 @@ import pytest
 
 from airfaans.uq_experiment import (
     EnsembleManifest,
+    aggregate_ensemble_records,
     audit_ensemble_records,
     compare_ood_uncertainty,
     load_ensemble_manifest,
@@ -58,6 +59,18 @@ def test_ensemble_audit_rejects_changed_checkpoint_hash(tmp_path: Path):
 
     with pytest.raises(ValueError, match="mixed-provenance"):
         audit_ensemble_records(records, changed, "reynolds_ood", 4)
+
+
+def test_aggregate_ensemble_requires_complete_coverage(tmp_path: Path):
+    with pytest.raises(ValueError, match="incomplete coverage"):
+        aggregate_ensemble_records(tmp_path, _manifest(), "interpolation", expected_cases=2)
+
+
+def test_compare_ood_rejects_reordered_hashes():
+    base = {"evaluation_task": "interpolation", "checkpoint_sha256": ["a", "b"], "summary": {"mean_uncertainty": 1.0}}
+    shifted = {"evaluation_task": "reynolds_ood", "checkpoint_sha256": ["b", "a"], "summary": {"mean_uncertainty": 1.2}}
+    with pytest.raises(ValueError, match="same ensemble checkpoints"):
+        compare_ood_uncertainty(base, shifted)
 
 
 def _checkpoint(path: Path, *, seed: int, model: str = "pointwise_mlp") -> dict[str, object]:
