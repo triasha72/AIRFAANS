@@ -47,12 +47,19 @@
 
 ```python
 def test_manifest_rejects_duplicate_seed(tmp_path: Path):
-    paths = [write_checkpoint(tmp_path / "a.pt", seed=29), write_checkpoint(tmp_path / "b.pt", seed=29)]
+    paths = [
+        write_checkpoint(tmp_path / "a.pt", seed=29),
+        write_checkpoint(tmp_path / "b.pt", seed=29),
+    ]
     with pytest.raises(ValueError, match="distinct seeds"):
         load_ensemble_manifest(paths)
 
+
 def test_manifest_rejects_mixed_model(tmp_path: Path):
-    paths = [write_checkpoint(tmp_path / "a.pt", seed=29, model="pointwise_mlp"), write_checkpoint(tmp_path / "b.pt", seed=41, model="mesh_graph_net")]
+    paths = [
+        write_checkpoint(tmp_path / "a.pt", seed=29, model="pointwise_mlp"),
+        write_checkpoint(tmp_path / "b.pt", seed=41, model="mesh_graph_net"),
+    ]
     with pytest.raises(ValueError, match="share model and training task"):
         load_ensemble_manifest(paths)
 ```
@@ -75,13 +82,16 @@ def test_manifest_rejects_mixed_model(tmp_path: Path):
 
 ```python
 def test_audit_finds_first_missing_index(tmp_path: Path, manifest: EnsembleManifest):
-    records = tmp_path / "ensemble_cases"; records.mkdir()
+    records = tmp_path / "ensemble_cases"
+    records.mkdir()
     write_record(records / "0.json", manifest, task="reynolds_ood", index=0)
     write_record(records / "2.json", manifest, task="reynolds_ood", index=2)
     assert audit_ensemble_records(records, manifest, "reynolds_ood", 4).next_missing_index == 1
 
+
 def test_audit_rejects_changed_hash(tmp_path: Path, manifest: EnsembleManifest):
-    records = tmp_path / "ensemble_cases"; records.mkdir()
+    records = tmp_path / "ensemble_cases"
+    records.mkdir()
     write_record(records / "0.json", manifest, task="reynolds_ood", index=0)
     changed = replace(manifest, checkpoint_sha256=("other", *manifest.checkpoint_sha256[1:]))
     with pytest.raises(ValueError, match="mixed-provenance"):
@@ -109,9 +119,18 @@ def test_aggregate_requires_complete_coverage(tmp_path: Path, manifest: Ensemble
     with pytest.raises(ValueError, match="incomplete coverage"):
         aggregate_ensemble_records(tmp_path, manifest, "interpolation", expected_cases=2)
 
+
 def test_compare_rejects_reordered_hashes():
-    base = {"evaluation_task": "interpolation", "checkpoint_sha256": ["a", "b"], "summary": {"mean_uncertainty": 1.0}}
-    shifted = {"evaluation_task": "reynolds_ood", "checkpoint_sha256": ["b", "a"], "summary": {"mean_uncertainty": 1.2}}
+    base = {
+        "evaluation_task": "interpolation",
+        "checkpoint_sha256": ["a", "b"],
+        "summary": {"mean_uncertainty": 1.0},
+    }
+    shifted = {
+        "evaluation_task": "reynolds_ood",
+        "checkpoint_sha256": ["b", "a"],
+        "summary": {"mean_uncertainty": 1.2},
+    }
     with pytest.raises(ValueError, match="same ensemble checkpoints"):
         compare_ood_uncertainty(base, shifted)
 ```
@@ -134,7 +153,9 @@ def test_compare_rejects_reordered_hashes():
 
 ```python
 def test_plan_next_shard_starts_at_zero(tmp_path: Path):
-    state = runner.plan_next_shard(tmp_path / "ensemble_cases", manifest_fixture(), "reynolds_ood", 4)
+    state = runner.plan_next_shard(
+        tmp_path / "ensemble_cases", manifest_fixture(), "reynolds_ood", 4
+    )
     assert state["saved_cases"] == 0
     assert state["next_missing_index"] == 0
 ```

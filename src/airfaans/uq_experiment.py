@@ -290,9 +290,7 @@ def evaluate_ensemble_shard(
                     "seeds": list(manifest.seeds),
                     "checkpoint_sha256": list(manifest.checkpoint_sha256),
                     "field_metrics": field_metrics(case.targets[indices], mean),
-                    "mean_uncertainty": float(
-                        np.mean(np.linalg.norm(standard_deviation, axis=1))
-                    ),
+                    "mean_uncertainty": float(np.mean(np.linalg.norm(standard_deviation, axis=1))),
                     "uncertainty_error_correlation": uncertainty_error_correlation(
                         case.targets[indices], mean, standard_deviation
                     ),

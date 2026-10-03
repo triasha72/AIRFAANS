@@ -21,9 +21,7 @@ def plan_next_shard(
     evaluation_task: str,
     expected_cases: int,
 ) -> dict[str, object]:
-    audit = audit_ensemble_records(
-        records_directory, manifest, evaluation_task, expected_cases
-    )
+    audit = audit_ensemble_records(records_directory, manifest, evaluation_task, expected_cases)
     state = {
         "saved_cases": audit.saved_cases,
         "expected_cases": audit.expected_cases,
