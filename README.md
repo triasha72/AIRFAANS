@@ -8,6 +8,9 @@
 
 [3-D extension plan](docs/three-dimensional-extension.md) — tested 3-D mesh/graph interfaces and the evidence required before making a 3-D CFD claim.
 
+[Evidence matrix runbook](ROADMAP.md#reproducible-execution) — the resumable
+training matrix for the remaining scarce-data, Reynolds-OOD, and AoA-OOD work.
+
 ## What this project is
 
 AIRFAANS asks a practical question: can a machine-learning model predict an

@@ -38,3 +38,21 @@ must raise mean ensemble uncertainty by at least 10%, uncertainty/error
 correlation must reach 0.30, and uncertainty-guided acquisition must beat the
 matched random arm. Until the official compute run supplies those values, the
 release remains rejected.
+
+## Reproducible execution
+
+The remaining matrix is now executable with one command per treatment and
+resumes from existing checkpoints:
+
+```bash
+python scripts/run_evidence_matrix.py \
+  --dataset-root /path/to/airfrans \
+  --output-root artifacts/evidence_matrix
+```
+
+Use `--dry-run` to print the exact commands before submitting them to a GPU
+host. The script intentionally stops when the dataset, manifest, or config is
+missing and never creates placeholder evidence. After the nine treatments
+finish, run the three-member ensemble evaluator on interpolation, Reynolds-OOD,
+and AoA-OOD, then run the active-learning comparison and
+`scripts/assess_operational_readiness.py`.
