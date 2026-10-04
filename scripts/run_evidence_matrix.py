@@ -20,7 +20,7 @@ SEEDS = (17, 29, 41)
 
 def command(args: argparse.Namespace, task: str, seed: int) -> list[str]:
     output = args.output_root / task / f"{args.model}-seed{seed}"
-    return [
+    argv = [
         sys.executable,
         "-m",
         "airfaans.cli",
@@ -39,8 +39,10 @@ def command(args: argparse.Namespace, task: str, seed: int) -> list[str]:
         str(seed),
         "--output-dir",
         str(output),
-        "--resume",
     ]
+    if any((output / name).is_file() for name in ("latest.pt", "best.pt")):
+        argv.append("--resume")
+    return argv
 
 
 def main() -> int:
