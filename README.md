@@ -6,7 +6,9 @@
 
 [Problem statement](docs/PROJECT_PROBLEM_STATEMENT.md) — the design need, research question, scope, and success criteria.
 
-[3-D extension plan](docs/three-dimensional-extension.md) — tested 3-D mesh/graph interfaces and the evidence required before making a 3-D CFD claim.
+[3-D extension plan](docs/three-dimensional-extension.md) — interface and evidence requirements before making a 3-D CFD claim.
+
+[Remaining gaps and closure criteria](docs/evidence-gaps.md) — repository status, artifact recovery, and next experiments.
 
 [Evidence matrix runbook](ROADMAP.md#reproducible-execution) — the resumable
 training matrix for the remaining scarce-data, Reynolds-OOD, and AoA-OOD work.
@@ -94,7 +96,7 @@ authors. AirfRANS data and model weights are not redistributed here.
 |---|---|---|
 | Typed mesh/field representation | Implemented and tested | `src/airfaans/data.py` |
 | Mesh-connectivity and k-NN graphs | Implemented and tested | `src/airfaans/graph.py` |
-| 3-D mesh/graph interface | 3-D coordinates and `(dx, dy, dz, distance)` edges tested with a synthetic fixture; no 3-D CFD claim | `docs/three-dimensional-extension.md` |
+| 3-D mesh/graph interface | Planned; the published data contract accepts 2-D coordinates and four targets | `docs/three-dimensional-extension.md` |
 | Pointwise MLP | Implemented | `src/airfaans/models.py` |
 | MeshGraphNet-style message passing | Implemented | `src/airfaans/models.py` |
 | Irregular-point neural operator | Implemented | `src/airfaans/models.py` |
@@ -167,8 +169,8 @@ full-mesh evaluation took `1,121.88 s` on a Kaggle GPU session. Every case was
 persisted separately before aggregation and tied to checkpoint SHA-256
 `66e7b3bc19dc2a6582c80ddaab5a561d92029289d4d726fef6e24c01df140295`.
 This was the first credible single-treatment result. The matched architecture
-and seed evidence reported below now supersedes it for model comparison; OOD
-tasks remain pending.
+and seed evidence reported below now supersedes it for model comparison. OOD
+evidence is tracked separately in the table above.
 
 The matched 50-epoch, seed-17 architecture pass is now complete on all 200
 official interpolation test meshes:
@@ -189,7 +191,7 @@ A second MeshGraphNet treatment (seed 29, the same 50-epoch contract) has also
 completed all 200 official interpolation meshes. Relative L2 was `0.36349` for
 velocity-x, `0.65474` for velocity-y, `0.71475` for pressure, and `0.64414` for
 turbulent viscosity; drag and lift MAE were `0.21254` and `0.19944`. This is a
-useful repeat but not yet the preregistered three-seed estimate. Its raw records
+useful repeat; the completed three-seed estimate appears below. Its raw records
 were checked in the live Kaggle session, and the durable compact summary is in
 `artifacts/evaluation/mesh_graph_net_interpolation_seed29_50ep_summary.json`.
 
@@ -197,8 +199,8 @@ The seed-29 point neural operator is now complete under the same contract.
 Relative L2 was `0.41084` for velocity-x, `1.03226` for velocity-y, `1.19613`
 for pressure, and `0.80435` for turbulent viscosity; drag and lift MAE were
 `0.32790` and `0.29857`. Together with the earlier seed-29 MLP and MeshGraphNet
-runs, this completes the second matched architecture pass. Seed 41 remains
-necessary before reporting three-seed means and variation.
+runs, this completed the second matched architecture pass. Seed 41 was subsequently
+completed; use the three-seed table below for means and variation.
 
 The preregistered three-seed interpolation comparison is now complete. Values
 below are mean ± sample standard deviation over seeds 17, 29, and 41; every
@@ -415,7 +417,7 @@ the aggregate; compression is optional and is never the sole evidence copy.
 ## OOD uncertainty and active-learning execution
 
 The ensemble runner loads independently seeded real-AirfRANS checkpoints of the
-same architecture, uses identical sampled nodes for every member, and records
+same architecture, evaluates every node on each official mesh, and records
 per-case field error, ensemble uncertainty, and uncertainty-error correlation.
 The same checkpoint ensemble can be evaluated on interpolation, Reynolds-OOD,
 and AoA-OOD splits, preventing a separately trained OOD model from contaminating
@@ -426,23 +428,39 @@ airfaans evaluate-ensemble \
   --dataset-root "$AIRFRANS_DATASET_ROOT" \
   --checkpoint runs/seed17/best.pt --checkpoint runs/seed29/best.pt \
   --checkpoint runs/seed41/best.pt \
-  --evaluation-task interpolation --output results/uq-id.json
+  --evaluation-task interpolation --output-dir results/uq-id
+
+airfaans aggregate-ensemble \
+  --checkpoint runs/seed17/best.pt --checkpoint runs/seed29/best.pt \
+  --checkpoint runs/seed41/best.pt \
+  --evaluation-task interpolation --output-dir results/uq-id --expected-cases 200
 
 airfaans evaluate-ensemble \
   --dataset-root "$AIRFRANS_DATASET_ROOT" \
   --checkpoint runs/seed17/best.pt --checkpoint runs/seed29/best.pt \
   --checkpoint runs/seed41/best.pt \
-  --evaluation-task reynolds_ood --output results/uq-reynolds.json
+  --evaluation-task reynolds_ood --output-dir results/uq-reynolds
 
-airfaans compare-ood --id-report results/uq-id.json \
-  --ood-report results/uq-reynolds.json --output results/uq-ratio.json
+airfaans aggregate-ensemble \
+  --checkpoint runs/seed17/best.pt --checkpoint runs/seed29/best.pt \
+  --checkpoint runs/seed41/best.pt \
+  --evaluation-task reynolds_ood --output-dir results/uq-reynolds --expected-cases 496
+
+airfaans compare-ood --id-report results/uq-id/ensemble_result.json \
+  --ood-report results/uq-reynolds/ensemble_result.json --output results/uq-ratio.json
 ```
 
-`build_acquisition_round` freezes equal-sized uncertainty and seeded-random
-case selections from the same pool. Both arms must be retrained from scratch
-under equal compute. These commands make the pending experiment executable;
-they do not create OOD or active-learning claims until real checkpoint runs are
-published.
+Use checkpoints from one fixed training task in both ID and OOD evaluations.
+Repeat for AoA-OOD with 196 cases. Two compatible checkpoints permit an
+exploratory ensemble if the third is unavailable; state the ensemble size.
+The comparison requires at least a 10% uncertainty increase to pass the
+predeclared separation check. This is distinct from uncertainty calibration.
+
+`build_acquisition_round` provides equal-sized uncertainty and seeded-random
+selection primitives. It is not a complete retraining experiment. The input pool
+must exclude protected validation and test cases. A measured study still needs
+protected-pool validation, per-round retraining, and a matched random-arm report.
+No active-learning improvement is claimed.
 
 ## Scaling path
 
@@ -451,7 +469,7 @@ published.
 - Training supports CUDA AMP, gradient accumulation, checkpointing, and resume.
 - The real run records node/edge counts, peak accelerator memory, training
   throughput, and per-case inference latency.
-- DDP is a measured optional treatment, not a default requirement.
+- DDP execution is implemented; multi-GPU scaling measurements and FSDP remain pending.
 
 ## Repository map
 

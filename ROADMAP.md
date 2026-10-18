@@ -5,19 +5,19 @@
 The interpolation study is complete, including three architectures, three
 seeds, all 200 official test meshes, and force-coefficient checks. It also made
 one point clear: no architecture wins on every output. MeshGraphNet produced the
-best pressure and drag errors at this budget, while the pointwise MLP did better
-on several other quantities.
+lowest mean error across all four fields and drag at this budget, while the
+point neural operator had the lowest mean lift error.
 
 ## The question to answer next
 
 Can uncertainty tell us when the surrogate is leaving familiar aerodynamic
 conditions?
 
-The code for checkpoint ensembles, per-case uncertainty, OOD comparison, and
-uncertainty-guided case selection is ready. The missing part is the expensive
-run on the official Reynolds-number and angle-of-attack OOD tasks. Until those
-runs exist, the repository makes no claim that its uncertainty estimate is
-useful.
+Checkpoint ensembles, per-case uncertainty, OOD comparison, and case-selection
+primitives are implemented. Full-mesh ensemble measurements, calibration, and
+the matched active-learning retraining loop remain open. Single-model Reynolds
+results reported in the README are not ensemble-UQ results. See
+[the evidence audit](docs/evidence-gaps.md) for recovery and closure criteria.
 
 ## Planned run order
 
@@ -52,7 +52,10 @@ python scripts/run_evidence_matrix.py \
 
 Use `--dry-run` to print the exact commands before submitting them to a GPU
 host. The script intentionally stops when the dataset, manifest, or config is
-missing and never creates placeholder evidence. After the nine treatments
-finish, run the three-member ensemble evaluator on interpolation, Reynolds-OOD,
-and AoA-OOD, then run the active-learning comparison and
+missing and never creates placeholder evidence. The default selects MeshGraphNet
+only: nine task/seed treatments. Repeat with `--model pointwise_mlp` and
+`--model point_neural_operator` for the full 27-treatment matrix, reusing only
+compatible verified checkpoints. Then evaluate a fixed checkpoint ensemble on
+interpolation, Reynolds-OOD, and AoA-OOD. Implement and run the matched
+active-learning retraining comparison before invoking
 `scripts/assess_operational_readiness.py`.

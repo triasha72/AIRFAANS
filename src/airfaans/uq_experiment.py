@@ -18,7 +18,6 @@ from airfaans.experiment import (
     build_model,
     case_directory,
     official_split,
-    sample_indices,
 )
 from airfaans.normalization import Normalization
 
@@ -185,21 +184,38 @@ def aggregate_ensemble_records(
 def summarize_uq_cases(per_case: list[dict[str, object]]) -> dict[str, float]:
     if not per_case:
         raise ValueError("at least one case is required")
+    uncertainty = np.asarray([case["mean_uncertainty"] for case in per_case], dtype=float)
+    correlation = np.asarray(
+        [case["uncertainty_error_correlation"] for case in per_case], dtype=float
+    )
+    if not np.isfinite(uncertainty).all() or np.any(uncertainty < 0):
+        raise ValueError("uncertainty must be finite and non-negative")
+    if not np.isfinite(correlation).all() or np.any(np.abs(correlation) > 1):
+        raise ValueError("uncertainty/error correlation must be finite and in [-1, 1]")
     return {
-        "mean_uncertainty": float(np.mean([case["mean_uncertainty"] for case in per_case])),
-        "mean_uncertainty_error_correlation": float(
-            np.mean([case["uncertainty_error_correlation"] for case in per_case])
-        ),
+        "mean_uncertainty": float(np.mean(uncertainty)),
+        "mean_uncertainty_error_correlation": float(np.mean(correlation)),
     }
 
 
 def compare_ood_uncertainty(id_report: dict[str, object], ood_report: dict[str, object]):
+    if id_report.get("bounded") or ood_report.get("bounded"):
+        raise ValueError("bounded evidence cannot establish official OOD uncertainty separation")
+    if id_report.get("evaluation_task") != "interpolation" or ood_report.get(
+        "evaluation_task"
+    ) not in {"reynolds_ood", "aoa_ood"}:
+        raise ValueError("comparison requires an interpolation ID task and a Reynolds/AoA OOD task")
     if id_report["checkpoint_sha256"] != ood_report["checkpoint_sha256"]:
         raise ValueError("ID and OOD reports must use the same ensemble checkpoints in order")
     baseline = float(id_report["summary"]["mean_uncertainty"])
-    if baseline <= 0:
+    if not np.isfinite(baseline) or baseline <= 0:
         raise ValueError("ID uncertainty must be positive")
-    ratio = float(ood_report["summary"]["mean_uncertainty"]) / baseline
+    ood_uncertainty = float(ood_report["summary"]["mean_uncertainty"])
+    if not np.isfinite(ood_uncertainty) or ood_uncertainty < 0:
+        raise ValueError("OOD uncertainty must be finite and non-negative")
+    ratio = ood_uncertainty / baseline
+    if not np.isfinite(ratio):
+        raise ValueError("OOD/ID uncertainty ratio must be finite")
     return {
         "schema_version": "1.0",
         "evidence_label": "airfrans_ood_uncertainty_comparison",
@@ -207,7 +223,7 @@ def compare_ood_uncertainty(id_report: dict[str, object], ood_report: dict[str, 
         "ood_task": ood_report["evaluation_task"],
         "checkpoint_sha256": id_report["checkpoint_sha256"],
         "ood_to_id_uncertainty_ratio": ratio,
-        "passed_predeclared_ratio": ratio > 1.0,
+        "passed_predeclared_ratio": ratio >= 1.1,
     }
 
 
@@ -348,9 +364,9 @@ def evaluate_ensemble(
         case_ids = case_ids[:max_cases]
     per_case = []
     with torch.inference_mode():
-        for position, case_id in enumerate(case_ids):
+        for case_id in case_ids:
             case = load_case(case_directory(dataset_root, case_id))
-            indices = sample_indices(case, configs[0].nodes_per_case, 900_000 + position)
+            indices = np.arange(len(case.points))
             predictions = []
             for (model, normalization), config in zip(members, configs, strict=True):
                 x, _, edges, edge_features = _case_tensors(
