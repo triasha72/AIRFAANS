@@ -149,19 +149,21 @@ every mesh node and report total, pressure, and viscous CL/CD contributions.
 5. Do lower field errors translate into lower CL/CD errors?
 6. Can uncertainty-guided case selection reduce the CFD cases required?
 
-## Pending results
+## Results still requiring publication or execution
 
-| Task | Model | Pressure rel. L2 | Velocity rel. L2 | nu_t rel. L2 | CL MAE | CD MAE | Mean ± variation |
-|---|---|---:|---:|---:|---:|---:|---|
-| Full/interpolation | Pointwise MLP | 0.9355 | ux 0.3904; uy 0.7091 | 0.7888 | 0.2932 | 0.3628 | seed 17 only |
-| Full/interpolation | MeshGraphNet | 0.8261 | ux 0.4013; uy 0.7487 | 0.7886 | 0.5268 | 0.3012 | seed 17 only |
-| Full/interpolation | Point operator | 1.2434 | ux 0.4283; uy 1.0443 | 0.8018 | 0.2959 | 0.3695 | seed 17 only |
-| Reynolds OOD | Pointwise MLP | Pending | Pending | Pending | Pending | Pending | Pending |
-| Reynolds OOD | MeshGraphNet | Pending | Pending | Pending | Pending | Pending | Pending |
-| Reynolds OOD | Point operator | Pending | Pending | Pending | Pending | Pending | Pending |
-| AoA OOD | Pointwise MLP | Pending | Pending | Pending | Pending | Pending | Pending |
-| AoA OOD | MeshGraphNet | Pending | Pending | Pending | Pending | Pending | Pending |
-| AoA OOD | Point operator | Pending | Pending | Pending | Pending | Pending | Pending |
+Use the completed three-seed interpolation table above for the current ranking;
+the earlier seed-17 numbers are historical single-treatment results.
+
+| Task | Current evidence boundary | Remaining work |
+|---|---|---|
+| Reynolds OOD | README/history report six two-seed treatments with hashed bundles; numerical summaries/raw bundles are not checked in | Recover and revalidate bundles, publish metrics, and reconcile the three-seed matrix |
+| Scarce data | README/history report MLP seeds 17/23; bundles are not checked in | Recover evidence and complete the matched all-model seed contract |
+| AoA OOD | No measured result artifact in the repository | Run matched treatments on all 196 official test meshes |
+| Ensemble uncertainty | Full-mesh resumable software exists | Run fixed-ensemble ID/OOD evaluation and calibration diagnostics |
+| Active learning | Selection primitives exist | Implement protected-pool validation and matched per-round retraining; measure gains |
+
+See [the dated evidence audit](../docs/evidence-gaps.md) for closure criteria and
+artifact-recovery details. No new CFD result is produced by that audit.
 
 ## Evidence required before completion
 

@@ -157,3 +157,119 @@ def test_uq_case_summary_and_ood_comparison():
     comparison = compare_ood_uncertainty(base, shifted)
     assert comparison["ood_to_id_uncertainty_ratio"] == 1.5
     assert comparison["passed_predeclared_ratio"]
+
+
+@pytest.mark.parametrize("invalid", [float("nan"), float("inf"), -0.1])
+def test_uq_summary_rejects_invalid_uncertainty(invalid):
+    with pytest.raises(ValueError, match="uncertainty"):
+        summarize_uq_cases([{"mean_uncertainty": invalid, "uncertainty_error_correlation": 0.5}])
+
+
+def test_ood_comparison_uses_documented_ten_percent_threshold():
+    base = {
+        "evaluation_task": "interpolation",
+        "checkpoint_sha256": ["a", "b"],
+        "summary": {"mean_uncertainty": 1.0},
+    }
+    shifted = {**base, "evaluation_task": "aoa_ood", "summary": {"mean_uncertainty": 1.05}}
+    assert not compare_ood_uncertainty(base, shifted)["passed_predeclared_ratio"]
+
+
+def test_ood_comparison_rejects_bounded_evidence():
+    base = {
+        "evaluation_task": "interpolation",
+        "checkpoint_sha256": ["a", "b"],
+        "bounded": True,
+        "summary": {"mean_uncertainty": 1.0},
+    }
+    shifted = {**base, "evaluation_task": "aoa_ood"}
+    with pytest.raises(ValueError, match="bounded"):
+        compare_ood_uncertainty(base, shifted)
+
+
+def test_ood_comparison_rejects_an_id_report_used_as_ood():
+    base = {
+        "evaluation_task": "interpolation",
+        "checkpoint_sha256": ["a", "b"],
+        "summary": {"mean_uncertainty": 1.0},
+    }
+    with pytest.raises(ValueError, match="task"):
+        compare_ood_uncertainty(base, base)
+
+
+@pytest.mark.parametrize("max_cases", [None, 1])
+def test_legacy_ensemble_evaluates_full_meshes(tmp_path, monkeypatch, max_cases):
+    import json
+    from dataclasses import asdict
+
+    import numpy as np
+    import torch
+
+    import airfaans.uq_experiment as uq
+    from airfaans.experiment import ExperimentConfig, build_model
+    from airfaans.normalization import Normalization
+    from airfaans.synthetic import make_case
+
+    case = make_case(radial_count=2, angular_count=8)
+    normalization = Normalization(np.zeros(9), np.ones(9), np.zeros(4), np.ones(4))
+    checkpoints = []
+    for seed in (29, 41):
+        config = ExperimentConfig(
+            model="pointwise_mlp",
+            seed=seed,
+            hidden_dim=4,
+            nodes_per_case=8,
+            validation_cases=1,
+        )
+        path = tmp_path / f"seed-{seed}.pt"
+        torch.save(
+            {
+                "config": asdict(config),
+                "normalization": normalization.to_dict(),
+                "model": build_model(config, 9).state_dict(),
+            },
+            path,
+        )
+        checkpoints.append(path)
+    manifest = tmp_path / "tasks.json"
+    manifest.write_text(
+        json.dumps(
+            {"splits": {"full_train": ["train", "validation"], "full_test": ["case-a", "case-b"]}}
+        )
+    )
+    # Replace only external VTK I/O; use actual checkpoints, inference and metrics.
+    monkeypatch.setattr(uq, "load_case", lambda _: case)
+    monkeypatch.setattr(uq, "case_directory", lambda root, case_id: root / case_id)
+    result = uq.evaluate_ensemble(
+        tmp_path,
+        manifest,
+        checkpoints,
+        "interpolation",
+        tmp_path / "result.json",
+        max_cases=max_cases,
+    )
+    assert result["per_case"][0]["field_metrics"]["node_count"] == 16
+    assert result["bounded"] is (max_cases is not None)
+    assert result["case_count"] == (2 if max_cases is None else 1)
+
+
+@pytest.mark.parametrize("ratio, passed", [(1.09, False), (1.1, True)])
+def test_ood_comparison_threshold_boundary(ratio, passed):
+    base = {
+        "evaluation_task": "interpolation",
+        "checkpoint_sha256": ["a", "b"],
+        "summary": {"mean_uncertainty": 1.0},
+    }
+    shifted = {**base, "evaluation_task": "aoa_ood", "summary": {"mean_uncertainty": ratio}}
+    assert compare_ood_uncertainty(base, shifted)["passed_predeclared_ratio"] is passed
+
+
+def test_ood_comparison_rejects_overflowing_ratio():
+    base = {
+        "evaluation_task": "interpolation",
+        "checkpoint_sha256": ["a", "b"],
+        "summary": {"mean_uncertainty": 1e-308},
+    }
+    shifted = {**base, "evaluation_task": "aoa_ood", "summary": {"mean_uncertainty": 1e308}}
+    with pytest.raises(ValueError, match="finite"):
+        compare_ood_uncertainty(base, shifted)
